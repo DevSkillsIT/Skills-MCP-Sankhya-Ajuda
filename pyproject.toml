@@ -1,0 +1,90 @@
+[project]
+name = "sankhya_ajuda"
+version = "0.2.0"
+description = "ETL (Phase 1) for the Sankhya public help center — scrapes ajuda.sankhya.com.br, generates embeddings (vLLM or OpenAI), and populates PostgreSQL+pgvector for the MCP server. Built by Skills IT."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "MIT" }
+authors = [
+    { name = "Skills IT — Soluções em Tecnologia", email = "contato@skillsit.com.br" },
+]
+maintainers = [
+    { name = "Skills IT — Soluções em Tecnologia", email = "contato@skillsit.com.br" },
+    { name = "Adriano Fante" },
+]
+keywords = ["mcp", "sankhya", "help-center", "rag", "pgvector", "etl", "embeddings", "skillsit"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Text Processing :: Indexing",
+]
+dependencies = [
+    "httpx>=0.27",
+    "beautifulsoup4>=4.12",
+    "psycopg[binary,pool]>=3.2",
+    "pgvector>=0.3",
+    "orjson>=3.10",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "structlog>=24.4",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+mcp = ["fastmcp>=2.11"]
+dev = [
+    "ruff>=0.7",
+    "pyright>=1.1.380",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-mock>=3.14",
+]
+
+[project.urls]
+Homepage      = "https://www.skillsit.com.br"
+Repository    = "https://github.com/skillsit/sankhya-ajuda-mcp"
+Issues        = "https://github.com/skillsit/sankhya-ajuda-mcp/issues"
+Documentation = "https://github.com/skillsit/sankhya-ajuda-mcp#readme"
+
+[project.scripts]
+sankhya-sync = "sync.sync:main"
+
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "PL", "RUF"]
+ignore = ["S101", "PLR0913"]
+
+[tool.ruff.lint.per-file-ignores]
+"sync/sync.py" = ["PLR0915"]
+# Tests legitimately compare against small literal counts.
+"tests/**/*.py" = ["PLR2004", "PLC0415", "SLF001"]
+
+[tool.pyright]
+include = ["src", "sync"]
+pythonVersion = "3.13"
+typeCheckingMode = "standard"
+reportMissingImports = "error"
+reportMissingTypeStubs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+python_files = "test_*.py"

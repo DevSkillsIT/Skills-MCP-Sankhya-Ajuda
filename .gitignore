@@ -1,0 +1,42 @@
+# ─── Secrets and runtime configuration ──────────────────────────────
+.env
+mcp-server/.env
+
+# ─── Python ─────────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.pyright/
+.mypy_cache/
+
+# ─── Node / TypeScript build artifacts ──────────────────────────────
+mcp-server/node_modules/
+mcp-server/dist/
+mcp-server/coverage/
+mcp-server/.tsbuildinfo
+
+# ─── Generic build outputs ──────────────────────────────────────────
+dist/
+build/
+
+# ─── Logs ───────────────────────────────────────────────────────────
+*.log
+logs/
+mcp-server/logs/
+
+# ─── OS / editor noise ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# ─── Internal Skills IT tooling (not required to run the MCP) ───────
+.moai/
+
+# ─── Claude Code / sub-agent local memory (per-machine working state) ─
+.claude/
+mcp-server/.claude/

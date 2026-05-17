@@ -1,0 +1,42 @@
+# MCP Server — .dockerignore
+# Build context is mcp-server/ — keep image lean.
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# Node artefacts
+node_modules/
+dist/
+coverage/
+.eslintcache
+.npm
+.tsbuildinfo
+
+# IDE / OS junk
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*~
+
+# Tests not needed at runtime
+tests/
+vitest.config.ts
+
+# Docs not needed inside the image
+docs/
+*.md
+!README.md
+
+# Local PM2 ecosystem (used only in native deploy)
+ecosystem.*.config.cjs
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,11 @@
+# /etc/logrotate.d/sankhya_ajuda_sync
+# Install with: sudo cp scripts/sankhya_ajuda_sync.logrotate /etc/logrotate.d/sankhya_ajuda_sync
+/var/log/sankhya_ajuda_sync.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 root root
+}

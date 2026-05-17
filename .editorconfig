@@ -1,0 +1,26 @@
+# EditorConfig — https://editorconfig.org
+# Sankhya Ajuda MCP — Skills IT
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+[*.py]
+indent_size = 4
+
+[*.{ts,tsx,js,jsx,json,yaml,yml,md}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+[*.{sh,bash}]
+indent_size = 2
+
+[*.sql]
+indent_size = 2

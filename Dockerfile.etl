@@ -1,0 +1,69 @@
+# syntax=docker/dockerfile:1.7
+#
+# Sankhya Ajuda ETL — Fase 1 (Python 3.13)
+# Skills IT — Soluções em Tecnologia
+# https://www.skillsit.com.br  ·  (63) 3224-4925  ·  Palmas-TO-Brasil
+#
+# Multi-stage build: builder installs deps in a virtualenv; final stage
+# copies only `.venv` + source — ~60% smaller than single-stage.
+
+# ─── Builder ────────────────────────────────────────────────────────────────
+FROM python:3.13-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /build
+
+# System deps required to build psycopg + pgvector wheels
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cache the dependency layer (only invalidated when pyproject.toml changes)
+COPY pyproject.toml ./
+RUN python -m venv /opt/venv \
+    && /opt/venv/bin/pip install --upgrade pip \
+    && /opt/venv/bin/pip install -e .
+
+# Copy source after deps so code changes don't bust the deps cache
+COPY src/ ./src/
+COPY sync/ ./sync/
+COPY sql/ ./sql/
+
+RUN /opt/venv/bin/pip install -e .
+
+# ─── Final ──────────────────────────────────────────────────────────────────
+FROM python:3.13-slim AS final
+
+LABEL org.opencontainers.image.title="sankhya-ajuda-etl" \
+      org.opencontainers.image.description="Sankhya Help Center ETL (Phase 1) — scrapes ajuda.sankhya.com.br, embeds with vLLM/OpenAI, populates Postgres+pgvector" \
+      org.opencontainers.image.vendor="Skills IT — Soluções em Tecnologia" \
+      org.opencontainers.image.authors="Skills IT <contato@skillsit.com.br>" \
+      org.opencontainers.image.url="https://www.skillsit.com.br" \
+      org.opencontainers.image.source="https://github.com/skillsit/sankhya-ajuda-mcp" \
+      org.opencontainers.image.licenses="MIT"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+# Runtime-only deps (libpq for psycopg; build-essential is NOT needed at runtime)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq5 ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 1000 sankhya \
+    && useradd  --system --uid 1000 --gid sankhya --home /app sankhya
+
+WORKDIR /app
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /build/src/ ./src/
+COPY --from=builder /build/sync/ ./sync/
+COPY --from=builder /build/sql/ ./sql/
+
+USER sankhya
+
+# Default command: run a full sync. Override via `docker run ... <other cmd>`.
+CMD ["sankhya-sync"]

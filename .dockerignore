@@ -1,0 +1,76 @@
+# Sankhya Ajuda — root .dockerignore
+# Defense-in-depth: even if a secret slips past .gitignore, the build context
+# won't include it. Keep this list aggressive.
+
+# Secrets — NEVER ship to Docker images
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+id_rsa*
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python — bytecode + venvs + caches
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.python-version
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.pyright/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# Node.js — won't be needed inside Python image
+**/node_modules/
+**/dist/
+**/coverage/
+**/.eslintcache
+mcp-server/node_modules/
+mcp-server/dist/
+mcp-server/coverage/
+
+# IDE / OS junk
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
+Thumbs.db
+
+# Logs & local artefacts
+*.log
+logs/
+.moai/
+.claude/
+
+# Documentation that doesn't belong in images
+docs/
+*.md
+!README.md
+LICENSE
+
+# Tests (not needed at runtime)
+tests/
+**/tests/
+
+# Docker meta — don't recurse into yourself
+docker-compose*.yml
+Dockerfile*
+.dockerignore

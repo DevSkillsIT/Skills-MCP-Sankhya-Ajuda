@@ -1,0 +1,176 @@
+# =============================================================================
+# Sankhya Ajuda MCP — Docker Compose
+# Skills IT — Soluções em Tecnologia
+# https://www.skillsit.com.br  ·  (63) 3224-4925  ·  Palmas-TO-Brasil
+# =============================================================================
+#
+# Default profile:  postgres + mcp-server
+#   $ docker compose up -d
+#   $ docker compose run --rm etl sankhya-sync          # primeira indexação
+#
+# GPU profile (opcional):  + vLLM containerizado (requer nvidia-docker2)
+#   $ docker compose --profile gpu up -d
+#
+# =============================================================================
+
+name: sankhya-ajuda
+
+services:
+  # ─────────────────────────────────────────────────────────────────────────
+  # PostgreSQL 17 + pgvector
+  # ─────────────────────────────────────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: sankhya-ajuda-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${PG_DATABASE:-sankhya_ajuda}
+      POSTGRES_USER:     ${PG_USER:-sankhya_ajuda}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?PG_PASSWORD is required in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    ports:
+      - "${PG_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-sankhya_ajuda} -d ${PG_DATABASE:-sankhya_ajuda}"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - sankhya-net
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # ETL — Phase 1 (Python). Roda sob demanda via `docker compose run --rm etl`.
+  # Não fica em loop — quem orquestra é o cron do host ou um scheduler externo.
+  # ─────────────────────────────────────────────────────────────────────────
+  etl:
+    build:
+      context: .
+      dockerfile: Dockerfile.etl
+    image: sankhya-ajuda-etl:${IMAGE_TAG:-0.2.0}
+    container_name: sankhya-ajuda-etl
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PG_HOST:           postgres
+      PG_PORT:           5432
+      PG_DB:             ${PG_DATABASE:-sankhya_ajuda}
+      PG_USER:           ${PG_USER:-sankhya_ajuda}
+      PG_PASSWORD:       ${PG_PASSWORD}
+      VLLM_BASE_URL:     ${VLLM_BASE_URL:-}
+      VLLM_API_KEY:      ${VLLM_API_KEY:-}
+      VLLM_MODEL:        ${VLLM_MODEL:-/model}
+      VLLM_DIMENSIONS:   ${VLLM_DIMENSIONS:-2560}
+      VLLM_TIMEOUT:      ${VLLM_TIMEOUT:-60}
+      SANKHYA_HC_BASE:   ${SANKHYA_HC_BASE:-https://ajuda.sankhya.com.br}
+      SANKHYA_HC_LOCALE: ${SANKHYA_HC_LOCALE:-pt-br}
+      SANKHYA_HC_DELAY:  ${SANKHYA_HC_DELAY:-0.3}
+      SYNC_LOG_LEVEL:    ${SYNC_LOG_LEVEL:-INFO}
+    networks:
+      - sankhya-net
+    # `restart: no` — ETL é batch, não daemon. Rode via:
+    #   docker compose run --rm etl sankhya-sync
+    restart: "no"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # MCP Server — Phase 2 (Node.js)
+  # ─────────────────────────────────────────────────────────────────────────
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    image: sankhya-ajuda-mcp:${IMAGE_TAG:-0.2.0}
+    container_name: sankhya-ajuda-mcp
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MCP_HOST:                       0.0.0.0
+      MCP_PORT:                       3105
+      MCP_AUTH_TOKEN:                 ${MCP_AUTH_TOKEN:?MCP_AUTH_TOKEN is required (generate via `openssl rand -hex 32`)}
+      MCP_BODY_LIMIT_BYTES:           ${MCP_BODY_LIMIT_BYTES:-4000000}
+      SESSION_IDLE_TIMEOUT_MS:        ${SESSION_IDLE_TIMEOUT_MS:-1800000}
+      SESSION_CLEANUP_INTERVAL_MS:    ${SESSION_CLEANUP_INTERVAL_MS:-60000}
+      PG_HOST:                        postgres
+      PG_PORT:                        5432
+      PG_DATABASE:                    ${PG_DATABASE:-sankhya_ajuda}
+      PG_USER:                        ${PG_USER:-sankhya_ajuda}
+      PG_PASSWORD:                    ${PG_PASSWORD}
+      PG_POOL_MIN:                    ${PG_POOL_MIN:-1}
+      PG_POOL_MAX:                    ${PG_POOL_MAX:-4}
+      EMBEDDING_PROVIDER:             ${EMBEDDING_PROVIDER:-openai}
+      VLLM_BASE_URL:                  ${VLLM_BASE_URL:-http://vllm:8000/v1}
+      VLLM_API_KEY:                   ${VLLM_API_KEY:-}
+      VLLM_MODEL:                     ${VLLM_MODEL:-/model}
+      VLLM_TIMEOUT_MS:                ${VLLM_TIMEOUT_MS:-60000}
+      EMBEDDING_FALLBACK_OPENAI:      ${EMBEDDING_FALLBACK_OPENAI:-false}
+      OPENAI_API_KEY:                 ${OPENAI_API_KEY:-}
+      OPENAI_MODEL:                   ${OPENAI_MODEL:-text-embedding-3-large}
+      LOG_LEVEL:                      ${LOG_LEVEL:-info}
+      TENANT_LABEL:                   ${TENANT_LABEL:-skillsit}
+    ports:
+      - "${MCP_PORT:-3105}:3105"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3105/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - sankhya-net
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # vLLM (OPCIONAL — profile=gpu) — requer NVIDIA GPU + nvidia-docker2
+  # ─────────────────────────────────────────────────────────────────────────
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: sankhya-ajuda-vllm
+    profiles: ["gpu"]
+    restart: unless-stopped
+    command:
+      - --model
+      - ${VLLM_MODEL_HF:-Qwen/Qwen3-Embedding-4B}
+      - --served-model-name
+      - /model
+      - --task
+      - embed
+      - --dtype
+      - float16
+      - --max-model-len
+      - "8192"
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - vllm-cache:/root/.cache/huggingface
+    ports:
+      - "${VLLM_LOCAL_PORT:-8090}:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - sankhya-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 6
+      start_period: 120s
+
+# ───────────────────────────────────────────────────────────────────────────
+volumes:
+  postgres-data:
+    name: sankhya-ajuda-postgres-data
+  vllm-cache:
+    name: sankhya-ajuda-vllm-cache
+
+networks:
+  sankhya-net:
+    name: sankhya-ajuda-net
+    driver: bridge
