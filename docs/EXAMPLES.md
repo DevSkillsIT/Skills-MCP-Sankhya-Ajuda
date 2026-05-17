@@ -119,7 +119,7 @@ Sankhya, um cliente me ligou perguntando como cancelar uma NF-e que foi emitida 
 **Tools:**
 
 - `sankhya_ajuda_search_articles({query: "cancelamento NF-e procedimento", limit: 5})`
-- `sankhya_ajuda_get_article_details({article_id: <top match>, max_body_chars: 6000})`
+- `sankhya_ajuda_get_article_details({article_id: <top match>, max_body_chars: 8000})`
 
 **Resposta esperada:** resposta pronta em tom de atendimento + link do artigo para enviar ao cliente.
 
@@ -145,7 +145,7 @@ mesmo após configurar o emissor. Já validamos certificado digital."
 
 **O que o prompt faz (embutido no protocolo):**
 
-1. `sankhya_ajuda_search_articles({query: "serviço não configurado NF-e", mode: "hybrid", limit: 5})`
+1. `sankhya_ajuda_search_articles({query: "serviço não configurado NF-e", mode: "hybrid", limit: 7})`
 2. `sankhya_ajuda_get_article_details({article_id: <top-1>})` para detalhes
 3. Opcional: `sankhya_ajuda_list_categories()` se precisar filtrar
 
@@ -270,7 +270,7 @@ de aprendizado: o que ler primeiro, em que ordem, e quais erros comuns devo conh
 
 1. `sankhya_ajuda_list_categories()` para mapear domínios
 2. `sankhya_ajuda_list_sections({category_id: <Documentação de Telas>})` para listar seções de "Estoque"
-3. `sankhya_ajuda_search_articles({query: "estoque conceito introdução", mode: "semantic", limit: 10})`
+3. `sankhya_ajuda_search_articles({query: "estoque conceito introdução", mode: "semantic", limit: 15})`
 
 **Resposta:** roteiro com 5-10 artigos em ordem didática.
 
@@ -427,7 +427,7 @@ Existem artigos diferentes para cada caso?
 
 **Tools:**
 
-1. `sankhya_ajuda_search_articles({query: "cancelamento NF-e 30 dias", mode: "semantic", limit: 10})`
+1. `sankhya_ajuda_search_articles({query: "cancelamento NF-e 30 dias", mode: "semantic", limit: 15})`
 2. `sankhya_ajuda_get_article_details` nos top-2 mais relevantes
 3. LLM produz comparativo em tabela
 
@@ -449,7 +449,7 @@ Quais módulos foram afetados?
 **Tools:**
 
 1. `sankhya_ajuda_list_categories()` → identifica a categoria "Reforma tributária"
-2. `sankhya_ajuda_search_articles({query: "reforma tributária visão geral", category_id: <id>, mode: "semantic", limit: 10})`
+2. `sankhya_ajuda_search_articles({query: "reforma tributária visão geral", category_id: <id>, mode: "semantic", limit: 15})`
 
 ---
 
@@ -464,7 +464,7 @@ Há rejeições novas do SEFAZ?
 
 **Tools:**
 
-- `sankhya_ajuda_search_articles({query: "TGF reforma tributária rejeição SEFAZ", mode: "hybrid", limit: 10})`
+- `sankhya_ajuda_search_articles({query: "TGF reforma tributária rejeição SEFAZ", mode: "hybrid", limit: 15})`
 
 ---
 
@@ -478,7 +478,7 @@ Sankhya, o que é DPS e qual a diferença para a NFS-e padrão?
 
 **Tools:**
 
-- `sankhya_ajuda_search_articles({query: "DPS declaração prestada serviço", mode: "semantic", limit: 5})`
+- `sankhya_ajuda_search_articles({query: "DPS declaração prestada serviço", mode: "semantic", limit: 10})`
 - `sankhya_ajuda_get_article_details` no top match
 
 ---

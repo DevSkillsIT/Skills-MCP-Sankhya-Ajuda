@@ -143,8 +143,8 @@ PostgreSQL postgres:5433
 
 | Tool | Parâmetros | Descrição |
 |---|---|---|
-| `sankhya_ajuda_search_articles` | `query: string` (1-500 chars), `limit?: int=10` (1-25), `category_id?: int\|null`, `mode?: 'hybrid'\|'semantic'\|'keyword'='hybrid'`, `include_outdated?: bool=false` | Busca híbrida (RRF k=60) ou modo único |
-| `sankhya_ajuda_get_article_details` | `article_id: int` (BIGINT), `max_body_chars?: int=6000` (100-40000) | Artigo completo em Markdown |
+| `sankhya_ajuda_search_articles` | `query: string` (1-500 chars), `limit?: int=15` (1-50), `category_id?: int\|null`, `mode?: 'hybrid'\|'semantic'\|'keyword'='hybrid'`, `include_outdated?: bool=false` | Busca híbrida (RRF k=60) ou modo único |
+| `sankhya_ajuda_get_article_details` | `article_id: int` (BIGINT), `max_body_chars?: int=8000` (100-40000) | Artigo completo em Markdown |
 | `sankhya_ajuda_list_categories` | — (input vazio) | Lista as 14 categorias (ID, nome, URL, contagem) |
 | `sankhya_ajuda_list_sections` | `category_id?: int\|null`, `parent_section_id?: int\|null` | Lista 230 seções (59 subseções aninhadas) |
 | `sankhya_ajuda_list_mcp_resources` | — | Bridge: lista 6 URIs `sankhya-ajuda://` |

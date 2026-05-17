@@ -18,14 +18,14 @@
       "url": "https://www.skillsit.com.br"
     }
   ],
-  "homepage": "https://github.com/skillsit/sankhya-ajuda-mcp#readme",
+  "homepage": "https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/skillsit/sankhya-ajuda-mcp.git",
+    "url": "https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git",
     "directory": "mcp-server"
   },
   "bugs": {
-    "url": "https://github.com/skillsit/sankhya-ajuda-mcp/issues"
+    "url": "https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda/issues"
   },
   "scripts": {
     "build": "tsc",

@@ -41,9 +41,9 @@ const inputSchema = {
     .number()
     .int()
     .min(1)
-    .max(25)
-    .default(10)
-    .describe('Quantidade maxima de resultados na resposta (1-25, default 10)'),
+    .max(50)
+    .default(15)
+    .describe('Quantidade maxima de resultados na resposta (1-50, default 15)'),
   category_id: z
     .number()
     .int()
@@ -79,7 +79,7 @@ export function registerSearchTool(server: McpServer, ctx: ToolContext): void {
       try {
         const args = {
           query: String(rawArgs.query),
-          limit: typeof rawArgs.limit === 'number' ? rawArgs.limit : 10,
+          limit: typeof rawArgs.limit === 'number' ? rawArgs.limit : 15,
           category_id:
             typeof rawArgs.category_id === 'number' ? rawArgs.category_id : null,
           include_outdated:

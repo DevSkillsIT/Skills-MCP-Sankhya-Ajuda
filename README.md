@@ -5,7 +5,7 @@
 
 # Sankhya Ajuda MCP
 
-> **Status:** ✅ Em produção · **Versão:** 1.5.5 · **Endpoint padrão:** `http://<host>:3105/mcp` · **Tools:** 8 · **Resources:** 6 · **Prompts:** 4 · **Desenvolvido por:** [Skills IT](https://www.skillsit.com.br)
+> **Status:** ✅ Em produção · **Versão:** 1.5.6 · **Endpoint padrão:** `http://<host>:3105/mcp` · **Tools:** 8 · **Resources:** 6 · **Prompts:** 4 · **Desenvolvido por:** [Skills IT](https://www.skillsit.com.br)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![MCP Protocol](https://img.shields.io/badge/MCP-2025--11--25-orange)](https://modelcontextprotocol.io)
@@ -84,7 +84,7 @@ A ferramenta oficial de IA do Sankhya (**BIA — Business Intelligence Assistant
 4. **Toggle `EMBEDDING_PROVIDER`** — `vllm` (local), `openai` (cloud) ou `none` (FTS-only, sem custo)
 5. **Tools-bridge** — adaptadores que expõem `resources/*` e `prompts/*` como tools regulares, para máxima compatibilidade
 6. **4 Prompts pré-configurados** — workflows guiados (troubleshoot, quick_lookup, explain_module, compare_articles)
-7. **Calibração empírica** — defaults `limit=10`, `max_body_chars=6000` baseados em distribuição real do corpus (P50-P99)
+7. **Calibração empírica** — defaults `limit=15`, `max_body_chars=8000` baseados em distribuição real do corpus (P50-P99) e densidade de categorias (64% em 2 categorias)
 
 ---
 
@@ -182,8 +182,8 @@ O projeto é composto por **duas fases desacopladas**, conversando apenas via sc
 ### Teste Rápido (Cenário #1)
 
 ```bash
-git clone https://github.com/skillsit/sankhya-ajuda-mcp.git
-cd sankhya-ajuda-mcp
+git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+cd Skills-MCP-Sankhya-Ajuda
 
 cp .env.example .env
 # Edite .env: gere MCP_AUTH_TOKEN com: openssl rand -hex 32
@@ -200,8 +200,8 @@ Completo em ~10 min. Veja [`docs/INSTALL.md`](./docs/INSTALL.md) para detalhes.
 ### Production (Cenário #2 — com PostgreSQL existente)
 
 ```bash
-git clone https://github.com/skillsit/sankhya-ajuda-mcp.git
-cd sankhya-ajuda-mcp
+git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+cd Skills-MCP-Sankhya-Ajuda
 
 # FASE 1 — Python ETL
 python3.13 -m venv .venv
@@ -463,11 +463,11 @@ Sankhya, o que significa o erro E0004 na NF-e?
 
 **O que acontece:**
 
-1. A LLM chama `sankhya_ajuda_search_articles({query: "E0004 NF-e", mode: "keyword", limit: 10})`
-2. Recebe top-10 artigos (default) com URLs e scores
+1. A LLM chama `sankhya_ajuda_search_articles({query: "E0004 NF-e", mode: "keyword"})`
+2. Recebe top-15 artigos (default) com URLs e scores
 3. Identifica o artigo mais relevante (top-1) e apresenta resposta com causa, solução e link oficial
 
-> 💡 **Default `limit=10`** (max 25). Use `limit=3` ou `5` para busca rápida quando você quer só os artigos mais relevantes (ex: prompt `sankhya_quick_lookup`), e `limit=15-25` para análise comparativa ou exploração ampla.
+> 💡 **Default `limit=15`** (max 50). Use `limit=3-5` para busca rápida quando você quer só os artigos mais relevantes (ex: prompt `sankhya_quick_lookup`), e `limit=25-50` para análise comparativa ou exploração ampla. Calibrado para corpus de 6.123 artigos com 64% concentrados em 2 categorias.
 
 ---
 
@@ -797,7 +797,7 @@ Implementação e manutenção: **[Skills IT — Soluções em Tecnologia](https
 - 🌐 [www.skillsit.com.br](https://www.skillsit.com.br)
 - 📱 **(63) 3224-4925** — WhatsApp / Telefone
 - 📍 **Palmas — TO — Brasil**
-- ✉️ suporte@skillit.com.br
+- ✉️ suporte@skillsit.com.br
 
 Para questões técnicas: abra uma **issue no GitHub** (após publicação) ou contate diretamente pelos canais acima.
 

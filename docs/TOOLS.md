@@ -8,7 +8,7 @@
 
 > Documentação detalhada da superfície MCP do **Sankhya Ajuda MCP**: **8 tools**, **6 resources** (3 estáticas + 3 templates RFC 6570) e **4 prompts**. Todas as operações são **somente leitura** (read-only) sobre o help center público do ERP Sankhya.
 
-**Versão:** 1.5.5 · **Servidor:** `@skillsit/sankhya-ajuda-mcp` · **Protocolo MCP:** 2025-11-25 (Streamable HTTP)
+**Versão:** 1.5.6 · **Servidor:** `@skillsit/sankhya-ajuda-mcp` · **Protocolo MCP:** 2025-11-25 (Streamable HTTP)
 
 ---
 
@@ -103,7 +103,7 @@ Busca **híbrida** (RRF k=60), **semântica** ou **keyword-only** sobre os 6.123
 | Nome | Tipo | Obrigatório | Default | Limites | Descrição |
 |---|---|:---:|---|---|---|
 | `query` | `string` | Sim | — | 1-500 chars | Texto livre da consulta |
-| `limit` | `int` | Não | `10` | 1-25 | Quantidade máxima de resultados |
+| `limit` | `int` | Não | `15` | 1-50 | Quantidade máxima de resultados |
 | `category_id` | `int \| null` | Não | `null` | > 0 | Filtra por uma das 14 categorias |
 | `include_outdated` | `bool` | Não | `false` | — | Inclui artigos marcados como obsoletos pela Sankhya |
 | `mode` | `enum` | Não | `"hybrid"` | `hybrid` / `semantic` / `keyword` | Estratégia de ranking |
@@ -181,15 +181,16 @@ Recupera o **conteúdo completo** de um artigo: título, breadcrumb, corpo limpo
 | Nome | Tipo | Obrigatório | Default | Limites | Descrição |
 |---|---|:---:|---|---|---|
 | `article_id` | `int` (BIGINT) | Sim | — | ≥ 1 | ID do artigo Zendesk (retornado por search) |
-| `max_body_chars` | `int` | Não | `6000` | 100 - 40.000 | Limite de caracteres do corpo |
+| `max_body_chars` | `int` | Não | `8000` | 100 - 40.000 | Limite de caracteres do corpo |
 
-#### Calibração empírica (v1.5.5)
+#### Calibração empírica (v1.5.6)
 
 Distribuição real de `length(body_text)` em chars: **P50=1.563**, **P75=3.046**, **P90=7.144**, **P95=12.661**, **P99=40.435**, **MAX=288.953**.
 
 | `max_body_chars` | Cobertura de artigos completos | Quando usar |
 |---|---|---|
-| `6000` (default) | 88% | Resposta padrão para suporte |
+| `6000` | 88% | Resposta enxuta para suporte |
+| `8000` (default) | 92% | Cobre P90, padrão para a maioria dos casos |
 | `15000` | 96% | Análise técnica detalhada |
 | `40000` (max) | 99% | Comparação ou auditoria profunda |
 
@@ -520,7 +521,7 @@ Detalhes completos em [`EMBEDDINGS-PROVIDER.md`](./EMBEDDINGS-PROVIDER.md) e [`F
 ## Boas Práticas de Uso (para a LLM e para o desenvolvedor)
 
 1. **Economia de tokens:** 1 call de `search_articles` já retorna top-N com breadcrumb. Evite chamar `get_article_details` em loop para todos os resultados.
-2. **Default `limit=10`:** use `limit=5` para resposta rápida; `limit=15-25` apenas em análise comparativa.
+2. **Default `limit=15`:** use `limit=3-5` para resposta rápida; `limit=25-50` apenas em análise comparativa profunda. Calibrado para corpus de 6.123 artigos com 64% concentrados em 2 categorias.
 3. **`include_outdated=false` default:** só passe `true` se o usuário pedir conteúdo arquivado.
 4. **Use `list_categories()` antes de filtrar:** se for limitar busca por `category_id`, descubra os IDs primeiro.
 5. **Códigos de erro do Sankhya:** use `mode=keyword` para correspondência exata (ex: `"E0004"`, `"PRD0011"`).

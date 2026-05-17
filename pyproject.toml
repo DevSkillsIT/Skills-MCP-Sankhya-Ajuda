@@ -47,9 +47,9 @@ dev = [
 
 [project.urls]
 Homepage      = "https://www.skillsit.com.br"
-Repository    = "https://github.com/skillsit/sankhya-ajuda-mcp"
-Issues        = "https://github.com/skillsit/sankhya-ajuda-mcp/issues"
-Documentation = "https://github.com/skillsit/sankhya-ajuda-mcp#readme"
+Repository    = "https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda"
+Issues        = "https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda/issues"
+Documentation = "https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda#readme"
 
 [project.scripts]
 sankhya-sync = "sync.sync:main"

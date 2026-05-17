@@ -41,11 +41,12 @@ const inputSchema = {
     .int()
     .min(100, 'max_body_chars minimo: 100')
     .max(40000, 'max_body_chars maximo: 40000')
-    .default(6000)
+    .default(8000)
     .describe(
-      'Limite de caracteres do corpo do artigo. Range 100-40000, default 6000. ' +
-        'Empirico no banco Sankhya: default 6000 cobre 88% dos artigos completos, ' +
-        '15000 cobre 96%, 40000 cobre 99%. Subir so quando o usuario pedir analise profunda.',
+      'Limite de caracteres do corpo do artigo. Range 100-40000, default 8000. ' +
+        'Empirico no banco Sankhya: default 8000 cobre 92% dos artigos completos ' +
+        '(P90=7.144 chars), 15000 cobre 96%, 40000 cobre 99% (P99=40.435). ' +
+        'Subir so quando o usuario pedir analise profunda.',
     ),
 };
 
@@ -67,7 +68,7 @@ export function registerArticleTool(server: McpServer, ctx: ToolContext): void {
       try {
         const articleId = Number(rawArgs.article_id);
         const maxBodyChars =
-          typeof rawArgs.max_body_chars === 'number' ? rawArgs.max_body_chars : 6000;
+          typeof rawArgs.max_body_chars === 'number' ? rawArgs.max_body_chars : 8000;
 
         const article = await getArticleFull(ctx.pool, articleId, maxBodyChars);
         if (!article) {

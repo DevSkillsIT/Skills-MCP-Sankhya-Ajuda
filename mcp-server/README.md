@@ -35,8 +35,8 @@ Fase 2 do projeto `sankhya_ajuda` — SPEC-SANKHYA-AJUDA-001. Mirrors os padrõe
 
 | Tool | Função |
 |---|---|
-| `sankhya_ajuda_search_articles` | Busca híbrida (RRF k=60) com modes `hybrid`/`semantic`/`keyword`. `limit` default 10, max 25 |
-| `sankhya_ajuda_get_article_details` | Artigo completo em Markdown (`max_body_chars` 100-40000, default 6000) |
+| `sankhya_ajuda_search_articles` | Busca híbrida (RRF k=60) com modes `hybrid`/`semantic`/`keyword`. `limit` default 15, max 50 |
+| `sankhya_ajuda_get_article_details` | Artigo completo em Markdown (`max_body_chars` 100-40000, default 8000) |
 | `sankhya_ajuda_list_categories` | 14 categorias top-level |
 | `sankhya_ajuda_list_sections` | 230 seções (filtros `category_id`, `parent_section_id`) |
 | `sankhya_ajuda_list_mcp_resources` | Bridge: lista 6 URIs MCP |

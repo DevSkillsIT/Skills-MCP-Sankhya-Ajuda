@@ -46,6 +46,28 @@ qualquer cliente compatível com MCP 2025-11-25 Streamable HTTP.
 
 ---
 
+## [1.5.6] — 2026-05-17 — Recalibração por Densidade do Corpus
+
+### Changed — Fase 2 (MCP Server)
+- `limit` default em `sankhya_ajuda_search_articles`: **10 → 15** (max: **25 → 50**)
+  - Motivo: corpus de 6.123 artigos com 64% concentrado em 2 categorias (Solução de Problemas: 2.640; Documentação de Telas: 1.277). top-10 perdia nuance em queries densas; top-15 captura cluster relevante + variantes
+  - Cap superior subiu para suportar análise comparativa profunda; ~8K tokens em top-50, cap 400KB folgado
+  - Lost-in-the-middle controlado: top-15-25 é sweet spot para LLMs modernas
+- `max_body_chars` default em `sankhya_ajuda_get_article_details`: **6000 → 8000**
+  - Motivo: P90 = 7.144 chars; default 8000 cobre 92% dos artigos completos (vs 88% anterior)
+  - Cap superior (40.000) mantido — P99 já coberto
+- Prompts nomeados recalibrados:
+  - `sankhya_troubleshoot`: limit **5 → 7** (mais margem para causas não-óbvias)
+  - `sankhya_explain_module`: limit **5 → 10** (módulos densos como Pessoas+ tem 770 artigos)
+  - `sankhya_quick_lookup`: mantém limit=3 (é "quick")
+
+### Documentation
+- README, TOOLS.md, ARCHITECTURE.md, mcp-server/README.md, EXAMPLES.md alinhados com novos defaults
+- Server instructions atualizadas para refletir nova recomendação ("Use 5 para rápida, 25-50 para análise")
+- Tabela de cobertura em TOOLS.md atualizada com nova linha P90
+
+---
+
 ## [1.5.5] — 2026-05-16 — Calibração Empírica de Defaults
 
 ### Changed — Fase 2 (MCP Server)

@@ -24,8 +24,8 @@ Este documento explica como instalar e rodar o **Sankhya Ajuda MCP**. Escolha o 
 
 1. Clone o repositório
    ```bash
-   git clone https://github.com/skillsit/sankhya-ajuda-mcp.git
-   cd sankhya-ajuda-mcp
+   git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+   cd Skills-MCP-Sankhya-Ajuda
    ```
 
 2. Configure o arquivo `.env` (variáveis de ambiente — "configurações secretas")
@@ -136,8 +136,8 @@ docker compose down
 
 1. Clone o repositório
    ```bash
-   git clone https://github.com/skillsit/sankhya-ajuda-mcp.git
-   cd sankhya-ajuda-mcp
+   git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+   cd Skills-MCP-Sankhya-Ajuda
    ```
 
 2. Configure o Postgres e crie o banco (uma única vez)

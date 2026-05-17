@@ -28,13 +28,14 @@ export const SERVER_INSTRUCTIONS = `MCP do Help Center publico do Sankhya ERP (a
 REGRAS CRITICAS:
 1. ECONOMIA: 1 call de search_articles ja retorna top-N com breadcrumb. Nao
    chame get_article_details em loop.
-2. LIMIT default 10 (max 25). Use 5 para resposta rapida, 15-25 para analise
-   comparativa ou exploracao de tema novo.
+2. LIMIT default 15 (max 50). Use 5 para resposta rapida, 25-50 para analise
+   comparativa ou exploracao de tema novo. Corpus tem 6.123 artigos, 64%
+   concentrados em 2 categorias (Solucao de Problemas + Documentacao de Telas).
 3. BUSCA HIBRIDA: mode=hybrid (default) combina semantica + FTS via RRF.
    Use semantic para sinonimos, keyword para codigo de erro/nome exato.
 4. OBSOLETOS: include_outdated=false default. So passe true se pedido.
 5. CATEGORIA: list_categories() antes de filtrar busca por category_id.
-6. ARTIGOS LONGOS: max_body_chars default 6000. Aumente para comparacao.
+6. ARTIGOS LONGOS: max_body_chars default 8000 (cobre 92% completo). Aumente para comparacao.
 7. FALLBACK: hybrid degrada para keyword_fallback se embeddings caem.
    semantic retorna EMBEDDING_UNAVAILABLE. keyword nunca chama embeddings.
 8. CROSS-MODEL: se provider != modelo do banco, semantic forca keyword com
@@ -44,8 +45,8 @@ REGRAS CRITICAS:
     compare_articles). list_prompt_catalog para detalhes.
 
 TOOLS:
-- sankhya_ajuda_search_articles(query, limit?=10, category_id?, include_outdated?, mode?)
-- sankhya_ajuda_get_article_details(article_id, max_body_chars?=6000)
+- sankhya_ajuda_search_articles(query, limit?=15, category_id?, include_outdated?, mode?)
+- sankhya_ajuda_get_article_details(article_id, max_body_chars?=8000)
 - sankhya_ajuda_list_categories()
 - sankhya_ajuda_list_sections(category_id?, parent_section_id?)
 - bridge: sankhya_ajuda_list_mcp_resources, sankhya_ajuda_read_resource_by_uri,

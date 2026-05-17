@@ -122,7 +122,7 @@ function generatePromptMessages(
       return [
         systemMessage(
           'Voce e um suporte tecnico N2 do ERP Sankhya. Investigue o problema do usuario seguindo este protocolo:\n\n' +
-            'PASSO 1 (obrigatorio): sankhya_ajuda_search_articles({query: "<sintoma exato>", mode: "hybrid", limit: 5})\n' +
+            'PASSO 1 (obrigatorio): sankhya_ajuda_search_articles({query: "<sintoma exato>", mode: "hybrid", limit: 7})\n' +
             'PASSO 2 (condicional): sankhya_ajuda_get_article_details({article_id: <melhor match>}) para detalhe.\n' +
             'PASSO 3 (condicional): sankhya_ajuda_list_categories() se precisar filtrar por dominio.\n\n' +
             'Apresente: causa provavel, solucao passo-a-passo, artigos referenciados (com URL), proximos passos se nao resolver.\n\n' +
@@ -150,7 +150,7 @@ function generatePromptMessages(
       return [
         systemMessage(
           'Voce e um consultor Sankhya. Explique o modulo solicitado citando docs oficiais.\n\n' +
-            `PASSO 1: sankhya_ajuda_search_articles({query: "${module} Sankhya conceito", limit: 5, mode: "semantic"})\n` +
+            `PASSO 1: sankhya_ajuda_search_articles({query: "${module} Sankhya conceito", limit: 10, mode: "semantic"})\n` +
             'PASSO 2 (opcional): sankhya_ajuda_get_article_details no artigo mais relevante.\n\n' +
             'Estrutura: O que e -> Quando usar -> Pre-requisitos -> Telas principais -> Erros comuns.\n' +
             'Cite URLs do help Sankhya em cada secao.',

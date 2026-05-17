@@ -39,8 +39,8 @@ Este projeto suporta **dois caminhos de deploy oficialmente** — escolha o que 
 ### Passo 1 — Clonar e preparar `.env`
 
 ```bash
-git clone https://github.com/skillsit/sankhya-ajuda-mcp.git
-cd sankhya-ajuda-mcp
+git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+cd Skills-MCP-Sankhya-Ajuda
 
 cp .env.example .env
 ```
@@ -157,8 +157,8 @@ Para quando você **já tem PostgreSQL** rodando no host (ou em rede acessível)
 ### Passo 1 — Clonar e configurar
 
 ```bash
-git clone https://github.com/skillsit/sankhya-ajuda-mcp.git
-cd sankhya-ajuda-mcp
+git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+cd Skills-MCP-Sankhya-Ajuda
 cp .env.example .env
 $EDITOR .env
 ```

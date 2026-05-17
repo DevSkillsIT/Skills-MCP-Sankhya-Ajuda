@@ -38,7 +38,7 @@ LABEL org.opencontainers.image.title="sankhya-ajuda-mcp" \
       org.opencontainers.image.vendor="Skills IT — Soluções em Tecnologia" \
       org.opencontainers.image.authors="Skills IT <contato@skillsit.com.br>" \
       org.opencontainers.image.url="https://www.skillsit.com.br" \
-      org.opencontainers.image.source="https://github.com/skillsit/sankhya-ajuda-mcp" \
+      org.opencontainers.image.source="https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="0.2.0"
 
