@@ -463,9 +463,11 @@ Sankhya, o que significa o erro E0004 na NF-e?
 
 **O que acontece:**
 
-1. A LLM chama `sankhya_ajuda_search_articles({query: "E0004 NF-e", mode: "keyword"})`
-2. Recebe top-3 artigos com URLs
-3. Apresenta resposta com causa, solução e link oficial
+1. A LLM chama `sankhya_ajuda_search_articles({query: "E0004 NF-e", mode: "keyword", limit: 10})`
+2. Recebe top-10 artigos (default) com URLs e scores
+3. Identifica o artigo mais relevante (top-1) e apresenta resposta com causa, solução e link oficial
+
+> 💡 **Default `limit=10`** (max 25). Use `limit=3` ou `5` para busca rápida quando você quer só os artigos mais relevantes (ex: prompt `sankhya_quick_lookup`), e `limit=15-25` para análise comparativa ou exploração ampla.
 
 ---
 
