@@ -1,6 +1,8 @@
 # ─── Secrets and runtime configuration ──────────────────────────────
 .env
 mcp-server/.env
+# Local SSH identity for ops access (e.g. GPU server) — never commit keys.
+.ssh/
 
 # ─── Python ─────────────────────────────────────────────────────────
 .venv/
