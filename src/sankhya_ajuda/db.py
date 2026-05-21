@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import structlog
 from pgvector.psycopg import register_vector_async
@@ -21,14 +21,14 @@ from .config import PgSettings, get_settings
 
 log = structlog.get_logger(__name__)
 
-_pool: AsyncConnectionPool | None = None
+_pool: AsyncConnectionPool[Any] | None = None
 
 
 async def _on_connect(conn: AsyncConnection) -> None:
     await register_vector_async(conn)
 
 
-async def get_pool(settings: PgSettings | None = None) -> AsyncConnectionPool:
+async def get_pool(settings: PgSettings | None = None) -> AsyncConnectionPool[Any]:
     global _pool  # noqa: PLW0603 — module-level lazy singleton is intentional
     if _pool is None:
         cfg = settings or get_settings().pg
@@ -143,7 +143,7 @@ async def get_article_hash(article_id: int) -> str | None:
             "SELECT body_hash FROM articles WHERE id = %s",
             (article_id,),
         )
-        row = await cur.fetchone()
+        row = cast("dict[str, Any] | None", await cur.fetchone())
         return row["body_hash"] if row else None
 
 
@@ -322,7 +322,7 @@ async def finish_sync(
 async def get_sync_state() -> dict[str, Any] | None:
     async with acquire() as conn:
         cur = await conn.execute("SELECT * FROM sync_state WHERE id = 1")
-        return await cur.fetchone()
+        return cast("dict[str, Any] | None", await cur.fetchone())
 
 
 # ---------------------------------------------------------------------

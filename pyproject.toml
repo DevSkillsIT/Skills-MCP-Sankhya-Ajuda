@@ -53,6 +53,7 @@ Documentation = "https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda#readme"
 
 [project.scripts]
 sankhya-sync = "sync.sync:main"
+sankhya-community-sync = "sync.community_sync:main"
 
 [build-system]
 requires = ["setuptools>=70"]
@@ -78,7 +79,12 @@ ignore = ["S101", "PLR0913"]
 "tests/**/*.py" = ["PLR2004", "PLC0415", "SLF001"]
 
 [tool.pyright]
-include = ["src", "sync"]
+include = ["src", "sync", "tests"]
+# Resolve third-party packages from the project venv (psycopg, psycopg_pool,
+# pgvector, ...). Without this pyright only sees its bundled typeshed stubs and
+# flags these installed-and-working imports as unresolved.
+venvPath = "."
+venv = ".venv"
 pythonVersion = "3.13"
 typeCheckingMode = "standard"
 reportMissingImports = "error"

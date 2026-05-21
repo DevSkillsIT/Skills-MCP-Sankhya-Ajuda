@@ -51,6 +51,30 @@ class ZendeskSettings(BaseSettings):
     user_agent: str = "sankhya_ajuda-mcp/0.1"
 
 
+class BettermodeSettings(BaseSettings):
+    """Community source (community.sankhya.com.br runs on Bettermode/GraphQL).
+
+    The GraphQL endpoint issues a read-only *guest* token to anonymous callers
+    via the ``tokens(networkDomain: ...)`` query, so no API key is required —
+    that token is fetched and refreshed by the client at runtime.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="SANKHYA_COMMUNITY_", env_file=".env", extra="ignore"
+    )
+
+    api_url: str = "https://api.bettermode.com"
+    network_domain: str = "community.sankhya.com.br"
+    # 20 is the safe ceiling: the Bettermode ``spaces`` query 500s when limit
+    # exceeds the available count, and posts/replies are well within budget here.
+    page_size: int = 20
+    delay: float = 0.3
+    timeout: float = 60.0
+    user_agent: str = "sankhya_ajuda-mcp/0.1"
+    # Refresh the guest token this many seconds before its JWT ``exp``.
+    token_refresh_margin: int = 300
+
+
 class SyncSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="SYNC_", env_file=".env", extra="ignore")
 
@@ -64,6 +88,7 @@ class Settings:
         self.pg = PgSettings()
         self.vllm = VllmSettings()
         self.zendesk = ZendeskSettings()
+        self.bettermode = BettermodeSettings()
         self.sync = SyncSettings()
 
 

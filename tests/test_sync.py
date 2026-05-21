@@ -153,7 +153,9 @@ async def test_full_sync_indexes_new_articles(
     assert patched_db["upsert_article_metadata"].await_count == 0
     patched_db["begin_sync"].assert_awaited_once()
     patched_db["finish_sync"].assert_awaited_once()
-    args = patched_db["finish_sync"].await_args.kwargs
+    finish_call = patched_db["finish_sync"].await_args
+    assert finish_call is not None
+    args = finish_call.kwargs
     assert args["status"] == "ok"
     assert args["article_count"] == 3
     assert args["changed_count"] == 3
@@ -237,7 +239,9 @@ async def test_embed_failure_aborts_sync(
 
     # finish_sync is still called from finally with status='error'
     patched_db["finish_sync"].assert_awaited_once()
-    args = patched_db["finish_sync"].await_args.kwargs
+    finish_call = patched_db["finish_sync"].await_args
+    assert finish_call is not None
+    args = finish_call.kwargs
     assert args["status"] == "error"
 
 
@@ -256,7 +260,9 @@ async def test_article_payload_carries_new_fields(
     runner = sync_mod.SyncRunner(category_id=None, limit=None, dry_run=False)
     await runner.run()
 
-    sent = patched_db["upsert_article_full"].await_args.args[0]
+    full_call = patched_db["upsert_article_full"].await_args
+    assert full_call is not None
+    sent = full_call.args[0]
     assert sent["outdated"] is True
     assert sent["author_id"] == 999
     assert sent["content_tag_ids"] == ["uuid-a", "uuid-b"]
@@ -306,7 +312,9 @@ async def test_section_parent_two_pass(
     # Both sections upserted, then the parents linked in a single call.
     assert patched_db["upsert_section"].await_count == 2
     patched_db["update_section_parents"].assert_awaited_once()
-    parent_map = patched_db["update_section_parents"].await_args.args[0]
+    parents_call = patched_db["update_section_parents"].await_args
+    assert parents_call is not None
+    parent_map = parents_call.args[0]
     assert parent_map == {99: 50, 50: None}
 
 
