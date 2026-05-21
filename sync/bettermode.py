@@ -171,15 +171,24 @@ class BettermodeClient:
     async def _collect_replies(
         self, parent_id: str, *, depth: int, out: list[dict[str, Any]]
     ) -> None:
-        async for node in self._paginate(
-            _REPLIES_QUERY, root="replies", variables={"p": parent_id}
-        ):
-            if len(out) >= _MAX_REPLIES_PER_POST:
-                return
-            node["_depth"] = depth
-            out.append(node)
-            if (node.get("totalRepliesCount") or 0) > 0 and depth < _MAX_REPLY_DEPTH:
-                await self._collect_replies(node["id"], depth=depth + 1, out=out)
+        try:
+            async for node in self._paginate(
+                _REPLIES_QUERY, root="replies", variables={"p": parent_id}
+            ):
+                if len(out) >= _MAX_REPLIES_PER_POST:
+                    return
+                node["_depth"] = depth
+                out.append(node)
+                if (node.get("totalRepliesCount") or 0) > 0 and depth < _MAX_REPLY_DEPTH:
+                    await self._collect_replies(node["id"], depth=depth + 1, out=out)
+        except BettermodeError as exc:
+            # Some replies live in a context the guest token can't read (403
+            # "Forbidden resource"). Each recursion level has its own try, so we
+            # keep every reply gathered so far and only drop this forbidden
+            # branch instead of aborting the whole sync.
+            log.warning(
+                "bettermode.replies_forbidden", parent_id=parent_id, error=str(exc)[:200]
+            )
 
     # ----- internals -----
     async def _paginate(

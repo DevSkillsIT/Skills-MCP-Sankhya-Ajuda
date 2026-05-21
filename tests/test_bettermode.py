@@ -189,3 +189,28 @@ async def test_fetch_replies_recurses_into_nested(
     assert [n["id"] for n in out] == ["R1", "R2"]
     assert out[0]["_depth"] == 0
     assert out[1]["_depth"] == 1  # nested reply tagged one level deeper
+
+
+@pytest.mark.asyncio
+async def test_fetch_replies_skips_forbidden_branch(
+    client: BettermodeClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A 403 on a nested branch must not lose the replies already gathered nor
+    # abort the whole fetch.
+    async def fake_request(payload: dict[str, Any], *, auth: bool) -> dict[str, Any]:
+        pid = payload["variables"]["p"]
+        if pid == "R1":
+            raise BettermodeError("graphql errors: 403 Forbidden resource")
+        edges = (
+            [{"node": {"id": "R1", "totalRepliesCount": 1}}] if pid == "P" else []
+        )
+        return {
+            "replies": {
+                "pageInfo": {"endCursor": None, "hasNextPage": False},
+                "edges": edges,
+            }
+        }
+
+    monkeypatch.setattr(client, "_request", fake_request)
+    out = await client.fetch_replies("P")
+    assert [n["id"] for n in out] == ["R1"]  # top-level kept, forbidden branch dropped
