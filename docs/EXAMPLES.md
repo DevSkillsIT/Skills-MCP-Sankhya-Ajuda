@@ -105,7 +105,7 @@ Use o prompt MCP nativo para resposta enxuta:
 }
 ```
 
-**Resultado:** 1 tool call interno (`search_articles({query: "emissão NF-e", limit: 3})`) e resposta compactada com top-1.
+**Resultado:** 1 tool call interno (`sankhya_ajuda_search_articles({query: "emissão NF-e", limit: 3})`) e resposta compactada com top-1.
 
 ---
 
@@ -390,7 +390,7 @@ Retorna metadados da seção (nome, categoria pai, parent, contagem de artigos, 
 }
 ```
 
-**O que acontece:** o prompt instrui a LLM a fazer 3 chamadas `get_article_details` (uma por ID) e produzir comparativo.
+**O que acontece:** o prompt instrui a LLM a fazer 3 chamadas `sankhya_ajuda_get_article_details` (uma por ID) e produzir comparativo.
 
 **Resposta esperada:**
 
@@ -756,15 +756,15 @@ A LLM deve mencionar `keyword_index_mismatch` ao usuário quando aparecer, pois 
 
 ## Padrões Anti-Padrão (evite)
 
-❌ **Não faça** múltiplas chamadas `get_article_details` em loop para todos os resultados de uma busca — viola o cap de 400 KB e queima tokens.
+❌ **Não faça** múltiplas chamadas `sankhya_ajuda_get_article_details` em loop para todos os resultados de uma busca — viola o cap de 400 KB e queima tokens.
 
-❌ **Não invente** `article_id` — IDs são BIGINT do Zendesk, não sequenciais. Sempre obter via `search`.
+❌ **Não invente** `article_id` — IDs são BIGINT do Zendesk, não sequenciais. Sempre obter via `sankhya_ajuda_search_articles`.
 
 ❌ **Não troque** `EMBEDDING_PROVIDER` em produção sem reindexar — o guardrail vai degradar para keyword e a busca semântica fica indisponível silenciosamente para o usuário até a reindexação.
 
-❌ **Não cache** resultados de `search_articles` por mais de algumas horas — o ETL roda diariamente às 03:00 e pode incluir/remover artigos.
+❌ **Não cache** resultados de `sankhya_ajuda_search_articles` por mais de algumas horas — o ETL roda diariamente às 03:00 e pode incluir/remover artigos.
 
-✅ **Pode cachear** resultados de `list_categories`, `list_sections`, `list_mcp_resources`, `list_prompt_catalog` agressivamente — `openWorldHint=false`.
+✅ **Pode cachear** resultados de `sankhya_ajuda_list_categories`, `sankhya_ajuda_list_sections`, `sankhya_ajuda_list_mcp_resources`, `sankhya_ajuda_list_prompt_catalog` agressivamente — `openWorldHint=false`.
 
 ---
 
@@ -773,7 +773,7 @@ A LLM deve mencionar `keyword_index_mismatch` ao usuário quando aparecer, pois 
 | Limite | Valor | Razão |
 |---|---|---|
 | Cap de resposta total | 400 KB | Performance e custo de transporte |
-| `limit` máximo em `search_articles` | 25 | Cobertura suficiente sem inflar resposta |
+| `limit` máximo em `sankhya_ajuda_search_articles` | 25 | Cobertura suficiente sem inflar resposta |
 | `max_body_chars` máximo | 40.000 | Cobre P99 dos artigos (P99 = 40.435 chars) |
 | Server instructions | 2.000 chars | Constraint do MCP SDK |
 | Idiomas | apenas pt-BR | Help center oficial é só pt-BR |

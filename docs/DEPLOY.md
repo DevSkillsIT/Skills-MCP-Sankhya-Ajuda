@@ -4,7 +4,7 @@
   https://www.skillsit.com.br  ·  (63) 3224-4925  ·  Palmas-TO-Brasil
 -->
 
-# Deploy Guide
+# Guia de Deploy
 
 Este projeto suporta **dois caminhos de deploy oficialmente** — escolha o que melhor casa com sua infra. Ambos chegam ao mesmo resultado funcional.
 
@@ -98,7 +98,7 @@ Quando terminar:
 
 ```bash
 curl http://localhost:3105/health | jq
-# "articles_count": 6123, "with_embedding_count": 6123, "last_sync_status": "ok"
+# "articles_count": 6125, "with_embedding_count": 6125, "last_sync_status": "ok"
 ```
 
 ### Passo 4 — Agendar sync diário (cron do host)
@@ -194,7 +194,7 @@ Validar:
 ```bash
 psql -h localhost -p 5433 -U sankhya_ajuda -d sankhya_ajuda \
   -c "SELECT COUNT(*), COUNT(embedding) FROM articles;"
-# Esperado: 6123 | 6123 (se EMBEDDING_PROVIDER ≠ none)
+# Esperado: 6125 | 6125 (se EMBEDDING_PROVIDER ≠ none)
 ```
 
 ### Passo 4 — Cron diário

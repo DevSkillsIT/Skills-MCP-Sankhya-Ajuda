@@ -64,7 +64,7 @@ PostgreSQL postgres:5433
   schema: public
   ├── categories         (14 rows)
   ├── sections           (230 rows; hierarquia parent_section_id)
-  ├── articles           (6.123 rows)
+  ├── articles           (6.125 rows)
   │   ├── body_text       TEXT             (HTML → texto limpo)
   │   ├── embedding_model VARCHAR          (ex: "Qwen/Qwen3-Embedding-4B")
   │   ├── embedding       HALFVEC(2560)    (pgvector; mutuamente exclusivo: vllm OU openai)
@@ -154,11 +154,11 @@ A segunda fonte — comunidade Sankhya (`community.sankhya.com.br`, Bettermode/G
 
 | Tool | Categoria | Parâmetros | Descrição |
 |---|---|---|---|
-| `sankhya_ajuda_search_articles` | Domínio | `query: string` (1-500 chars), `limit?: int=15` (1-50), `category_id?: int\|null`, `mode?: 'hybrid'\|'semantic'\|'keyword'='hybrid'`, `include_outdated?: bool=false` | Busca híbrida (RRF k=60) sobre 6.123 artigos do help center |
+| `sankhya_ajuda_search_articles` | Domínio | `query: string` (1-500 chars), `limit?: int=15` (1-50), `category_id?: int\|null`, `mode?: 'hybrid'\|'semantic'\|'keyword'='hybrid'`, `include_outdated?: bool=false` | Busca híbrida (RRF k=60) sobre 6.125 artigos do help center |
 | `sankhya_ajuda_get_article_details` | Domínio | `article_id: int` (BIGINT), `max_body_chars?: int=8000` (100-40000) | Artigo completo em Markdown |
 | `sankhya_ajuda_list_categories` | Domínio | — (input vazio) | Lista as 14 categorias (ID, nome, URL, contagem) |
 | `sankhya_ajuda_list_sections` | Domínio | `category_id?: int\|null`, `parent_section_id?: int\|null` | Lista 230 seções (59 subseções aninhadas) |
-| `sankhya_ajuda_search_knowledge_unified` | Comunidade | `query: string`, `source?: 'all'\|'help'\|'community'='all'`, `limit?: int=15` (1-50), `include_outdated?: bool=false` | Busca unificada (RRF cross-source) sobre help center + comunidade (7.618 posts) com dedup e rótulo de origem oficial (sem parâmetro `mode` — sempre híbrido intra-fonte per RFC04) |
+| `sankhya_ajuda_search_knowledge_unified` | Comunidade | `query: string`, `source?: 'all'\|'help'\|'community'='all'`, `limit?: int=15` (1-50), `include_outdated?: bool=false` | Busca unificada (RRF cross-source) sobre help center + comunidade (7.619 posts) com dedup e rótulo de origem oficial (sem parâmetro `mode` — sempre híbrido intra-fonte per RFC04) |
 | `sankhya_ajuda_get_community_post` | Comunidade | `post_id: string` (Bettermode), `max_body_chars?: int=8000` (100-40000) | Uma thread de Q&A comunitária (pergunta + respostas) |
 | `sankhya_ajuda_list_community_spaces` | Comunidade | — (input vazio) | Lista 33 espaços públicos da comunidade |
 | `sankhya_ajuda_list_mcp_resources` | Bridge | — | Bridge: lista 6 URIs `sankhya-ajuda://` |
@@ -331,11 +331,13 @@ vitest                     # unit tests
 │       ├── tools/               ← 8 MCP tools
 │       │   ├── base.ts          ← response formatters
 │       │   ├── search.ts        ← sankhya_ajuda_search_articles
+│       │   ├── search-unified.ts ← sankhya_ajuda_search_knowledge_unified
 │       │   ├── articles.ts      ← sankhya_ajuda_get_article_details
 │       │   ├── categories.ts    ← sankhya_ajuda_list_categories
 │       │   ├── sections.ts      ← sankhya_ajuda_list_sections
-│       │   ├── resource-tools.ts ← list_mcp_resources + read_resource_by_uri
-│       │   └── prompt-tools.ts  ← list_prompt_catalog + get_prompt_by_name
+│       │   ├── community.ts     ← sankhya_ajuda_get_community_post + sankhya_ajuda_list_community_spaces
+│       │   ├── resource-tools.ts ← bridge: sankhya_ajuda_list_mcp_resources + sankhya_ajuda_read_resource_by_uri
+│       │   └── prompt-tools.ts  ← bridge: sankhya_ajuda_list_prompt_catalog + sankhya_ajuda_get_prompt_by_name
 │       │
 │       ├── resources.ts         ← 6 MCP resources (sankhya-ajuda://)
 │       ├── prompts.ts           ← 4 MCP prompts
@@ -400,7 +402,7 @@ Decisões tomadas durante a implementação que divergem (ou enriquecem) este do
 
 2. **`parent_section_id` em `sections`** — descoberta durante inspeção da API: 26% das seções aninham sob outra. Sem isso, perderíamos a hierarquia `Sankhya > Pessoas+ > Lançamentos e Cálculos > Lançamentos da folha`. Implementado com FK `DEFERRABLE INITIALLY DEFERRED` + 2-pass no sync (insert all + update parents).
 
-3. **Truncamento de input do embedding em 8.000 chars** — vLLM rejeita inputs > 4.096 tokens. Truncamento happens só na borda do vetor; `body_text` completo continua no banco para FTS e para `sankhya_get_article` (Fase 2).
+3. **Truncamento de input do embedding em 8.000 chars** — vLLM rejeita inputs > 4.096 tokens. Truncamento happens só na borda do vetor; `body_text` completo continua no banco para FTS e para `sankhya_ajuda_get_article_details` (Fase 2).
 
 4. **`articles.breadcrumb` materializado** — VIEW recursiva `article_breadcrumb` existe, mas materializar evita o custo de CTE em toda query (no MCP esse caminho é exibido sempre). Refresh ao final de cada sync.
 

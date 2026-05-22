@@ -1,4 +1,4 @@
-# Schema Reference
+# Referência de Schema
 
 Referência completa do schema `sankhya_ajuda` em PostgreSQL. Fonte de verdade: `sql/schema.sql`.
 
@@ -82,7 +82,7 @@ A FK `parent_section_id` é **DEFERRABLE INITIALLY DEFERRED** para permitir que 
 
 ## Tabela `articles`
 
-Conteúdo principal: 6.123 linhas atualmente.
+Conteúdo principal: 6.125 linhas atualmente.
 
 | Coluna | Tipo | NOT NULL | Default | Origem Zendesk | Notas |
 |---|---|---|---|---|---|
@@ -213,7 +213,7 @@ Equivalente a `categories` para o help center. Bettermode chama de "spaces" — 
 
 ### Tabela `community_posts`
 
-Threads de Q&A (pergunta + respostas agregadas num único documento para embedding). Equivalente a `articles` mas com estrutura diferente. Conteúdo: 7.618 linhas atualmente (posts públicos da comunidade Bettermode com `status='PUBLISHED'`).
+Threads de Q&A (pergunta + respostas agregadas num único documento para embedding). Equivalente a `articles` mas com estrutura diferente. Conteúdo: 7.619 linhas atualmente (posts públicos da comunidade Bettermode com `status='PUBLISHED'`).
 
 | Coluna | Tipo | NOT NULL | Default | Origem | Notas |
 |---|---|---|---|---|---|

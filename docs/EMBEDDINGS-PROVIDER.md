@@ -1,10 +1,10 @@
 <!--
-  Sankhya Ajuda MCP — Embeddings Provider Decision Guide
+  Sankhya Ajuda MCP — Guia de Decisão de Provider de Embeddings
   Skills IT — Soluções em Tecnologia
   https://www.skillsit.com.br  ·  (63) 3224-4925  ·  Palmas-TO-Brasil
 -->
 
-# Embeddings Provider Guide
+# Guia de Provider de Embeddings
 
 Esta é provavelmente a **decisão de configuração mais importante** do projeto. Ler isto evita ranking semântico aleatório em produção.
 
@@ -94,7 +94,7 @@ O score é `ts_rank_cd` (FTS), não cosine — você sabe que o ranking semânti
 ### Use `openai` se...
 
 - Não tem GPU local
-- Volume baixo/médio (custo OpenAI ≈ $0.13 / 1M tokens em `text-embedding-3-large`; reindexar 6.123 artigos custa ~$0.03)
+- Volume baixo/médio (custo OpenAI ≈ $0.13 / 1M tokens em `text-embedding-3-large`; reindexar 6.125 artigos custa ~$0.03)
 - Quer deploy **simples** — só uma API key
 - Aceita dependência externa de cloud paga
 - Latência de ~300 ms é aceitável
@@ -158,7 +158,7 @@ Não precisa reindexar — o banco fica como está, e o MCP ignora a coluna `emb
 
 ## Custos comparativos (referência)
 
-| Provider | Custo de indexar 6.123 artigos | Custo por busca | Latência |
+| Provider | Custo de indexar 6.125 artigos | Custo por busca | Latência |
 |---|---|---|---|
 | `vllm` (local) | Eletricidade da GPU | Eletricidade | 30-80 ms |
 | `openai` | ~$0.03 (1×) | ~$0.00001 / query | 250-400 ms |

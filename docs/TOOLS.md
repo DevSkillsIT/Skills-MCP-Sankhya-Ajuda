@@ -24,16 +24,16 @@
 | **Busca Unificada** | RRF cross-source (k=60), dedup por título, label de origem oficial (evita burying) |
 | **6 Resources** | 3 estáticos (categorias/seções/sync_state) + 3 templates RFC 6570 (GET com {id}) |
 | **4 Prompts** | troubleshoot, quick_lookup, explain_module, compare_articles |
-| **Base Indexada** | 6.123 artigos (help) + 7.618 posts (comunidade) + 33 spaces públicos |
+| **Base Indexada** | 6.125 artigos (help) + 7.619 posts (comunidade) + 33 spaces públicos |
 | **Coluna Similaridade** | Cosine 0–1 (3 casas); v1.1.0 renomeia `Score` → `Similaridade` (R10) |
 | **Transport** | Streamable HTTP `:3105/mcp` + Bearer `MCP_AUTH_TOKEN` |
 
 ---
 
-## Quick Links (Tools v1.1.0)
+## Links Rápidos (Tools v1.1.0)
 
 **Help Center (4 tools):**
-- `sankhya_ajuda_search_articles` — Busca híbrida RRF (k=60) sobre 6.123 artigos
+- `sankhya_ajuda_search_articles` — Busca híbrida RRF (k=60) sobre 6.125 artigos
 - `sankhya_ajuda_get_article_details` — Artigo completo + breadcrumb + metadados
 - `sankhya_ajuda_list_categories` — 14 categorias top-level
 - `sankhya_ajuda_list_sections` — 230 seções + 59 subseções com hierarquia

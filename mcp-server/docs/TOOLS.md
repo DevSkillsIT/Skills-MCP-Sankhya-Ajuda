@@ -1,160 +1,161 @@
-# Sankhya Ajuda MCP — Tool Reference
+# Sankhya Ajuda MCP — Referência de Tools
 
-All 11 tools exposed by the MCP server. Transport: Streamable HTTP on `:3105/mcp`.
+Todas as 11 tools expostas pelo servidor MCP. Transporte: Streamable HTTP em `:3105/mcp`.
 Auth: `Authorization: Bearer <MCP_AUTH_TOKEN>`.
 
 ---
 
-## Quick Reference Table
+## Tabela de Referência Rápida
 
-| # | Tool | Group | Purpose |
-|---|------|-------|---------|
-| 1 | `sankhya_ajuda_search_articles` | Help Search | Hybrid search over 6,123 help center articles |
-| 2 | `sankhya_ajuda_get_article_details` | Help Search | Full article body by ID |
-| 3 | `sankhya_ajuda_list_categories` | Help Navigation | 14 top-level categories |
-| 4 | `sankhya_ajuda_list_sections` | Help Navigation | 230 sections with optional filters |
-| 5 | `sankhya_ajuda_search_knowledge_unified` | Unified Search | Help + community combined with RRF cross-source |
-| 6 | `sankhya_ajuda_get_community_post` | Community | Full thread detail for a community post |
-| 7 | `sankhya_ajuda_list_community_spaces` | Community | List 33 public community spaces |
-| 8 | `sankhya_ajuda_list_mcp_resources` | Bridge | List 6 MCP resource URIs |
-| 9 | `sankhya_ajuda_read_resource_by_uri` | Bridge | Read a `sankhya-ajuda://` URI |
-| 10 | `sankhya_ajuda_list_prompt_catalog` | Bridge | List 4 preconfigured prompts |
-| 11 | `sankhya_ajuda_get_prompt_by_name` | Bridge | Execute a named prompt |
+| # | Tool | Grupo | Função |
+|---|------|-------|--------|
+| 1 | `sankhya_ajuda_search_articles` | Busca (Help) | Busca híbrida sobre 6.125 artigos do help center |
+| 2 | `sankhya_ajuda_get_article_details` | Busca (Help) | Corpo completo do artigo por ID |
+| 3 | `sankhya_ajuda_list_categories` | Navegação (Help) | 14 categorias top-level |
+| 4 | `sankhya_ajuda_list_sections` | Navegação (Help) | 230 seções com filtros opcionais |
+| 5 | `sankhya_ajuda_search_knowledge_unified` | Busca Unificada | Help + comunidade combinados com RRF cross-source |
+| 6 | `sankhya_ajuda_get_community_post` | Comunidade | Thread completo de um post da comunidade |
+| 7 | `sankhya_ajuda_list_community_spaces` | Comunidade | Lista os 33 espaços públicos da comunidade |
+| 8 | `sankhya_ajuda_list_mcp_resources` | Bridge | Lista as 6 URIs de resources MCP |
+| 9 | `sankhya_ajuda_read_resource_by_uri` | Bridge | Lê uma URI `sankhya-ajuda://` |
+| 10 | `sankhya_ajuda_list_prompt_catalog` | Bridge | Lista os 4 prompts pré-configurados |
+| 11 | `sankhya_ajuda_get_prompt_by_name` | Bridge | Executa um prompt nomeado |
 
-All tools are **read-only** (`readOnlyHint=true`, `destructiveHint=false`).
+Todas as tools são **somente leitura** (`readOnlyHint=true`, `destructiveHint=false`).
 
 ---
 
-## Existing Tools (Help Center)
+## Tools do Help Center
 
 ### 1. `sankhya_ajuda_search_articles`
 
-Hybrid search (RRF k=60) combining semantic similarity (pgvector `halfvec 2560d`) and
-PT-BR full-text search (`portuguese_unaccent`) over 6,123 official Sankhya help center articles.
+Busca híbrida (RRF k=60) combinando similaridade semântica (pgvector `halfvec 2560d`) e
+full-text search PT-BR (`portuguese_unaccent`) sobre 6.125 artigos oficiais do help center Sankhya.
 
-**Annotations:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=true`
+**Anotações:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=true`
 
-**Parameters:**
+**Parâmetros:**
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `query` | string (1-500 chars) | Yes | — | Free-text search query |
-| `limit` | integer (1-50) | No | 15 | Maximum results |
-| `category_id` | integer | No | null | Filter to a specific category |
-| `include_outdated` | boolean | No | false | Include articles marked as outdated |
-| `mode` | enum: `hybrid`/`semantic`/`keyword` | No | `hybrid` | Search strategy |
+| Parâmetro | Tipo | Obrigatório | Default | Descrição |
+|-----------|------|-------------|---------|-----------|
+| `query` | string (1-500 chars) | Sim | — | Consulta em texto livre |
+| `limit` | integer (1-50) | Não | 15 | Máximo de resultados |
+| `category_id` | integer | Não | null | Filtra por uma categoria específica |
+| `include_outdated` | boolean | Não | false | Inclui artigos marcados como obsoletos |
+| `mode` | enum: `hybrid`/`semantic`/`keyword` | Não | `hybrid` | Estratégia de busca |
 
-**Returns:** Markdown table with columns: `Titulo | Breadcrumb | Similaridade | URL`.
+**Retorna:** tabela Markdown com colunas: `Título | Breadcrumb | Similaridade | URL`.
 
-**Degradation:** When `EMBEDDING_PROVIDER=none` or index mismatch detected, `hybrid` and `semantic`
-degrade to keyword-only search; `semantic` returns `EMBEDDING_UNAVAILABLE` if embeddings are
-unavailable and fallback is not possible.
+**Degradação:** quando `EMBEDDING_PROVIDER=none` ou há mismatch de índice, `hybrid` e `semantic`
+degradam para busca keyword-only; `semantic` retorna `EMBEDDING_UNAVAILABLE` se os embeddings
+estiverem indisponíveis e o fallback não for possível.
 
 ---
 
 ### 2. `sankhya_ajuda_get_article_details`
 
-Retrieves a complete article body (HTML stripped to clean Markdown) by its numeric ID,
-plus metadata: breadcrumb hierarchy, author, tags, dates, outdated flag, and canonical URL.
+Recupera o corpo completo de um artigo (HTML limpo para Markdown) pelo seu ID numérico,
+mais metadados: hierarquia de breadcrumb, autor, tags, datas, flag de obsolescência e URL canônica.
 
-**Annotations:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
+**Anotações:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
 
-**Parameters:**
+**Parâmetros:**
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `article_id` | integer | Yes | — | Zendesk article BIGINT ID |
-| `max_body_chars` | integer (100-40000) | No | 8000 | Character limit for body text |
+| Parâmetro | Tipo | Obrigatório | Default | Descrição |
+|-----------|------|-------------|---------|-----------|
+| `article_id` | integer | Sim | — | ID BIGINT do artigo no Zendesk |
+| `max_body_chars` | integer (100-40000) | Não | 8000 | Limite de caracteres do corpo |
 
-**Returns:** Markdown detail view with full body and metadata. Truncation notice appended when body exceeds `max_body_chars`.
+**Retorna:** visão de detalhe em Markdown com corpo completo e metadados. Aviso de truncamento é anexado quando o corpo excede `max_body_chars`.
 
-**Errors:** `NOT_FOUND` when article ID does not exist; `RESPONSE_TOO_LARGE` when body exceeds 400 KB.
+**Erros:** `NOT_FOUND` quando o ID do artigo não existe; `RESPONSE_TOO_LARGE` quando o corpo excede 400 KB.
 
 ---
 
 ### 3. `sankhya_ajuda_list_categories`
 
-Lists the 14 top-level categories of the Sankhya help center (e.g., Documentacao de Telas,
-Solucao de Problemas, Reforma Tributaria, Universidade Sankhya).
+Lista as 14 categorias top-level do help center Sankhya (ex.: Documentação de Telas,
+Solução de Problemas, Reforma Tributária, Universidade Sankhya).
 
-**Annotations:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
+**Anotações:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
 
-**Parameters:** None.
+**Parâmetros:** nenhum.
 
-**Returns:** Markdown table with columns: `ID | Nome | URL | Artigos`.
+**Retorna:** tabela Markdown com colunas: `ID | Nome | URL | Artigos`.
 
 ---
 
 ### 4. `sankhya_ajuda_list_sections`
 
-Lists the 230 sections of the Sankhya help center with optional filtering by category or
-parent section. Useful for navigation before a targeted search.
+Lista as 230 seções do help center Sankhya com filtragem opcional por categoria ou
+seção pai. Útil para navegação antes de uma busca dirigida.
 
-**Annotations:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
+**Anotações:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
 
-**Parameters:**
+**Parâmetros:**
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `category_id` | integer | No | null | Filter to a specific category |
-| `parent_section_id` | integer | No | null | Filter to subsections of a parent |
+| Parâmetro | Tipo | Obrigatório | Default | Descrição |
+|-----------|------|-------------|---------|-----------|
+| `category_id` | integer | Não | null | Filtra por uma categoria específica |
+| `parent_section_id` | integer | Não | null | Filtra subseções de um nó pai |
 
-**Returns:** Markdown table ordered by position with columns: `ID | Nome | Categoria | URL`.
+**Retorna:** tabela Markdown ordenada por posição com colunas: `ID | Nome | Categoria | URL`.
 
 ---
 
-## New Tools (Unified Search + Community)
+## Tools Novas (Busca Unificada + Comunidade)
 
 ### 5. `sankhya_ajuda_search_knowledge_unified`
 
-Unified search across both the Sankhya help center and the Sankhya community forum in a
-single query. Uses RRF cross-source ranking to interleave results from both corpora, labeling
-each item with its source (official help vs. community) and an official flag.
+Busca unificada sobre o help center e o fórum da comunidade Sankhya em uma única consulta.
+Usa ranking RRF cross-source para intercalar resultados dos dois corpora, rotulando cada
+item com sua origem (help oficial vs. comunidade) e uma flag de oficialidade.
 
-This tool solves the "anti-burying" problem: without cross-source RRF, community posts
-(7,618 items) can bury official help articles (6,123 items) when their volume is higher.
-RRF at k=60 ensures official articles consistently appear in the top results when relevant.
+Esta tool resolve o problema de "anti-burying": sem RRF cross-source, os posts da comunidade
+(7.619 itens) podem soterrar os artigos oficiais do help (6.125 itens) quando seu volume é maior.
+O RRF com k=60 garante que os artigos oficiais apareçam consistentemente no topo quando relevantes.
 
-**Annotations:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=true`
+**Anotações:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=true`
 
-**Parameters:**
+**Parâmetros:**
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `query` | string (1-500 chars) | Yes | — | Free-text search query |
-| `source` | enum: `help`/`community`/`all` | No | `all` | Source to search: help only, community only, or both |
-| `limit` | integer (1-50) | No | 15 | Maximum results returned |
-| `include_outdated` | boolean | No | false | Include outdated help articles (ignored for community) |
+| Parâmetro | Tipo | Obrigatório | Default | Descrição |
+|-----------|------|-------------|---------|-----------|
+| `query` | string (1-500 chars) | Sim | — | Consulta em texto livre |
+| `source` | enum: `help`/`community`/`all` | Não | `all` | Fonte a buscar: só help, só comunidade, ou ambas |
+| `limit` | integer (1-50) | Não | 15 | Máximo de resultados retornados |
+| `include_outdated` | boolean | Não | false | Inclui artigos obsoletos do help (ignorado para comunidade) |
 
-> **Note:** This tool does NOT accept `mode` or `category_id`. It always uses hybrid search
-> (semantic + keyword via RRF) for both sources. It NEVER returns `EMBEDDING_UNAVAILABLE`.
+> **Nota:** esta tool NÃO aceita `mode` nem `category_id`. Ela sempre usa busca híbrida
+> (semântica + keyword via RRF) para as duas fontes. NUNCA retorna `EMBEDDING_UNAVAILABLE`.
 
-**`source` enum behavior:**
+**Comportamento do enum `source`:**
 
-| `source` | DB calls | RRF | Dedup |
-|----------|----------|-----|-------|
-| `help` | `hybridSearch` only | intra-source (position-based) | none |
-| `community` | `hybridSearchCommunity` only | intra-source (position-based) | `dedupCommunityByTitle` |
-| `all` | both, `Math.max(20, limit)` each | `crossSourceRRF` then slice to `limit` | `dedupCommunityByTitle` before RRF |
+| `source` | Chamadas ao banco | RRF | Dedup |
+|----------|-------------------|-----|-------|
+| `help` | só `hybridSearch` | intra-fonte (por posição) | nenhum |
+| `community` | só `hybridSearchCommunity` | intra-fonte (por posição) | `dedupCommunityByTitle` |
+| `all` | ambas, `Math.max(20, limit)` cada | `crossSourceRRF` e fatia para `limit` | `dedupCommunityByTitle` antes do RRF |
 
-**Returns:** Markdown table with columns (exact order per RF01.8):
+**Retorna:** tabela Markdown com colunas (ordem exata por RF01.8):
 
 ```
 | Fonte | Oficial | ID | Título | Contexto | Similaridade | URL |
 ```
 
-- `Fonte`: `HELP` or `COMUNIDADE`
-- `Oficial`: `Sim` (help) or `Não` (community)
-- `ID`: Article ID (help, BIGINT as string) or post ID (community, alphanumeric string)
-- `Titulo`: Article or post title
-- `Contexto`: breadcrumb (help) or space name (community); `—` if absent
-- `Similaridade`: Cosine similarity 0.000–1.000 (3 decimal places) or `—` in keyword mode
+- `Fonte`: `HELP` ou `COMUNIDADE`
+- `Oficial`: `Sim` (help) ou `Não` (comunidade)
+- `ID`: ID do artigo (help, BIGINT como string) ou ID do post (comunidade, string alfanumérica)
+- `Título`: título do artigo ou post
+- `Contexto`: breadcrumb (help) ou nome do espaço (comunidade); `—` se ausente
+- `Similaridade`: similaridade de cosseno 0.000–1.000 (3 casas decimais) ou `—` em modo keyword
 
-**Degradation:** Same as `search_articles` — when `EMBEDDING_PROVIDER=none` or index mismatch,
-both corpora fall back to keyword-only search. `distThreshold` (env `COMMUNITY_DIST_THRESHOLD`,
-default 0.45) filters low-relevance community posts in the semantic CTE only.
+**Degradação:** igual à `sankhya_ajuda_search_articles` — quando `EMBEDDING_PROVIDER=none` ou
+há mismatch de índice, os dois corpora caem para busca keyword-only. O `distThreshold`
+(env `COMMUNITY_DIST_THRESHOLD`, default 0.45) filtra posts da comunidade com baixa
+relevância, apenas no CTE semântico.
 
-**Example call:**
+**Exemplo de chamada:**
 ```json
 {
   "query": "erro ao confirmar nota fiscal",
@@ -163,7 +164,7 @@ default 0.45) filters low-relevance community posts in the semantic CTE only.
 }
 ```
 
-**Example response excerpt:**
+**Trecho de resposta de exemplo:**
 ```
 | Fonte | Oficial | ID | Título | Contexto | Similaridade | URL |
 |---|---|---|---|---|---|---|
@@ -175,35 +176,35 @@ default 0.45) filters low-relevance community posts in the semantic CTE only.
 
 ### 6. `sankhya_ajuda_get_community_post`
 
-Retrieves the full thread of a community post, including the original post body plus all
-nested replies as composed by the ETL (`"Resposta de ..."` / `"Resposta aninhada de ..."`
-prefixes are preserved). Also returns space, tags, post type, accepted answer flag,
-reaction count, author, dates, and URL.
+Recupera o thread completo de um post da comunidade, incluindo o corpo do post original
+mais todas as respostas aninhadas, conforme compostas pelo ETL (os prefixos
+`"Resposta de ..."` / `"Resposta aninhada de ..."` são preservados). Também retorna espaço,
+tags, tipo do post, flag de resposta aceita, contagem de reações, autor, datas e URL.
 
-Use this as a drill-down after `sankhya_ajuda_search_knowledge_unified` returns a community
-result of interest.
+Use como drill-down depois que a `sankhya_ajuda_search_knowledge_unified` retornar um
+resultado da comunidade de interesse.
 
-**Annotations:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
+**Anotações:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
 
-**Parameters:**
+**Parâmetros:**
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `post_id` | string (min 1 char) | Yes | — | Alphanumeric community post ID (returned by `sankhya_ajuda_search_knowledge_unified`) |
-| `max_body_chars` | integer (100-40000) | No | 8000 | Character limit for the composed post body |
+| Parâmetro | Tipo | Obrigatório | Default | Descrição |
+|-----------|------|-------------|---------|-----------|
+| `post_id` | string (mín. 1 char) | Sim | — | ID alfanumérico do post da comunidade (retornado por `sankhya_ajuda_search_knowledge_unified`) |
+| `max_body_chars` | integer (100-40000) | Não | 8000 | Limite de caracteres do corpo composto do post |
 
-> Post IDs are alphanumeric strings from Bettermode, not BIGINTs like article IDs.
+> Os IDs de post são strings alfanuméricas do Bettermode, não BIGINTs como os IDs de artigo.
 
-**Returns:** Markdown detail view with:
-- **Header block:** ID, space, post type, tags, accepted answer, reactions, author, created/updated dates, URL.
-- **Body section:** full composed thread text (question + all replies). Truncation notice appended when `body_text_truncated=true`.
+**Retorna:** visão de detalhe em Markdown com:
+- **Bloco de cabeçalho:** ID, espaço, tipo do post, tags, resposta aceita, reações, autor, datas de criação/atualização, URL.
+- **Seção de corpo:** texto completo do thread composto (pergunta + todas as respostas). Aviso de truncamento anexado quando `body_text_truncated=true`.
 
-**Errors:**
-- `NOT_FOUND` — post ID does not exist in `community_posts`.
-- `RESPONSE_TOO_LARGE` — composed body exceeds 400 KB.
-- `INTERNAL_ERROR` — unexpected DB error.
+**Erros:**
+- `NOT_FOUND` — ID do post não existe em `community_posts`.
+- `RESPONSE_TOO_LARGE` — corpo composto excede 400 KB.
+- `INTERNAL_ERROR` — erro inesperado no banco.
 
-**Example call:**
+**Exemplo de chamada:**
 ```json
 {
   "post_id": "ABC123XYZ",
@@ -215,25 +216,25 @@ result of interest.
 
 ### 7. `sankhya_ajuda_list_community_spaces`
 
-Lists all public spaces (topics/groups/channels) of the Sankhya community forum.
-Useful for discovering where a user's question fits before filtering a search.
-Returns exactly the spaces with `private=false` (expected: 33 public spaces).
+Lista todos os espaços públicos (tópicos/grupos/canais) do fórum da comunidade Sankhya.
+Útil para descobrir onde a dúvida do usuário se encaixa antes de filtrar uma busca.
+Retorna exatamente os espaços com `private=false` (esperado: 33 espaços públicos).
 
-**Annotations:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
+**Anotações:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
 
-**Parameters:** None.
+**Parâmetros:** nenhum.
 
-**Returns:** Markdown table with columns:
+**Retorna:** tabela Markdown com colunas:
 
 ```
 | ID | Nome | Slug | URL | Posts | Membros |
 ```
 
-Ordered by `posts_count DESC`. No private spaces are ever returned.
+Ordenada por `posts_count DESC`. Nenhum espaço privado é retornado.
 
-**Example response excerpt:**
+**Trecho de resposta de exemplo:**
 ```
-**33 espacos** publicos da comunidade Sankhya
+**33 espaços** públicos da comunidade Sankhya
 
 | ID | Nome | Slug | URL | Posts | Membros |
 |---|---|---|---|---|---|
@@ -243,91 +244,91 @@ Ordered by `posts_count DESC`. No private spaces are ever returned.
 
 ---
 
-## Bridge Tools
+## Tools Bridge
 
 ### 8. `sankhya_ajuda_list_mcp_resources`
 
-Lists all 6 MCP resource URIs available under the `sankhya-ajuda://` scheme, with their
-MIME type and template indicator. Use for discovery before calling `read_resource_by_uri`.
+Lista todas as 6 URIs de resources MCP disponíveis no esquema `sankhya-ajuda://`, com seu
+MIME type e indicador de template. Use para descoberta antes de chamar `sankhya_ajuda_read_resource_by_uri`.
 
-**Annotations:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
+**Anotações:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=false`
 
-**Parameters:** None. **Returns:** Markdown table with URI, MIME type, and template flag.
+**Parâmetros:** nenhum. **Retorna:** tabela Markdown com URI, MIME type e flag de template.
 
 ---
 
 ### 9. `sankhya_ajuda_read_resource_by_uri`
 
-Reads data from a specific `sankhya-ajuda://` URI. Supports both concrete URIs
-(e.g., `sankhya-ajuda://categories`) and parameterized templates
-(e.g., `sankhya-ajuda://articles/{id}`).
+Lê dados de uma URI `sankhya-ajuda://` específica. Suporta tanto URIs concretas
+(ex.: `sankhya-ajuda://categories`) quanto templates parametrizados
+(ex.: `sankhya-ajuda://articles/{id}`).
 
-**Parameters:**
+**Parâmetros:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `uri` | string | Yes | Canonical MCP resource URI |
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|-----------|------|-------------|-----------|
+| `uri` | string | Sim | URI canônica de resource MCP |
 
-**Returns:** Markdown or JSON depending on the URI (sync_state returns JSON).
+**Retorna:** Markdown ou JSON dependendo da URI (sync_state retorna JSON).
 
 ---
 
 ### 10. `sankhya_ajuda_list_prompt_catalog`
 
-Lists the 4 preconfigured prompt templates with their names, descriptions, and required
-arguments. Use before calling `get_prompt_by_name`.
+Lista os 4 templates de prompt pré-configurados com seus nomes, descrições e argumentos
+obrigatórios. Use antes de chamar `sankhya_ajuda_get_prompt_by_name`.
 
-**Parameters:** None. **Returns:** Markdown table listing all available prompts.
+**Parâmetros:** nenhum. **Retorna:** tabela Markdown listando todos os prompts disponíveis.
 
-**Available prompts:**
+**Prompts disponíveis:**
 
-| Name | Argument | Purpose |
-|------|----------|---------|
-| `sankhya_troubleshoot` | `problem` | Structured troubleshooting workflow |
-| `sankhya_quick_lookup` | `term` | Quick terminology/feature lookup |
-| `sankhya_explain_module` | `module_name` | Detailed module explanation |
-| `sankhya_compare_articles` | `article_ids` (CSV of BIGINTs) | Side-by-side comparison |
+| Nome | Argumento | Função |
+|------|-----------|--------|
+| `sankhya_troubleshoot` | `problem` | Workflow estruturado de troubleshooting |
+| `sankhya_quick_lookup` | `term` | Consulta rápida de termo/funcionalidade |
+| `sankhya_explain_module` | `module_name` | Explicação detalhada de módulo |
+| `sankhya_compare_articles` | `article_ids` (CSV de BIGINTs) | Comparação lado a lado |
 
 ---
 
 ### 11. `sankhya_ajuda_get_prompt_by_name`
 
-Executes a named prompt template with user-provided arguments, returning structured
-Markdown messages for guided analysis workflows.
+Executa um template de prompt nomeado com argumentos fornecidos pelo usuário, retornando
+mensagens Markdown estruturadas para workflows guiados de análise.
 
-**Parameters:**
+**Parâmetros:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `name` | string | Yes | Prompt name (must match one from `list_prompt_catalog`) |
-| `arguments` | object | Varies | Prompt-specific arguments |
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|-----------|------|-------------|-----------|
+| `name` | string | Sim | Nome do prompt (deve casar com um de `sankhya_ajuda_list_prompt_catalog`) |
+| `arguments` | object | Varia | Argumentos específicos do prompt |
 
-**Errors:** `INVALID_PROMPT_NAME` when the name does not match any registered prompt.
-
----
-
-## Error Codes
-
-| Code | Meaning | Tools |
-|------|---------|-------|
-| `NOT_FOUND` | Entity does not exist | `get_article_details`, `get_community_post` |
-| `RESPONSE_TOO_LARGE` | Response exceeds 400 KB | All tools |
-| `INTERNAL_ERROR` | Unexpected exception | All tools |
-| `EMBEDDING_UNAVAILABLE` | Semantic search unavailable, no fallback | `search_articles` (semantic mode only) |
-| `INVALID_PROMPT_NAME` | Unknown prompt name | `get_prompt_by_name` |
-
-> `sankhya_ajuda_search_knowledge_unified` **never** returns `EMBEDDING_UNAVAILABLE` —
-> it always falls back to keyword search when embeddings are unavailable.
+**Erros:** `INVALID_PROMPT_NAME` quando o nome não casa com nenhum prompt registrado.
 
 ---
 
-## Environment Variables (Search-Related)
+## Códigos de Erro
 
-| Variable | Default | Description |
-|----------|---------|-------------|
+| Código | Significado | Tools |
+|--------|-------------|-------|
+| `NOT_FOUND` | Entidade não existe | `sankhya_ajuda_get_article_details`, `sankhya_ajuda_get_community_post` |
+| `RESPONSE_TOO_LARGE` | Resposta excede 400 KB | Todas as tools |
+| `INTERNAL_ERROR` | Exceção inesperada | Todas as tools |
+| `EMBEDDING_UNAVAILABLE` | Busca semântica indisponível, sem fallback | `sankhya_ajuda_search_articles` (só modo semantic) |
+| `INVALID_PROMPT_NAME` | Nome de prompt desconhecido | `sankhya_ajuda_get_prompt_by_name` |
+
+> A `sankhya_ajuda_search_knowledge_unified` **nunca** retorna `EMBEDDING_UNAVAILABLE` —
+> ela sempre cai para busca keyword quando os embeddings estão indisponíveis.
+
+---
+
+## Variáveis de Ambiente (relacionadas à busca)
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
 | `EMBEDDING_PROVIDER` | `vllm` | `vllm` / `openai` / `none` |
-| `COMMUNITY_DIST_THRESHOLD` | `0.45` | Cosine distance threshold for community semantic CTE (filters noise) |
+| `COMMUNITY_DIST_THRESHOLD` | `0.45` | Threshold de distância de cosseno para o CTE semântico da comunidade (filtra ruído) |
 
 ---
 
-*Generated for SPEC-SANKHYA-COMMUNITY-001 Phase 3. All 11 tools registered in `src/tools/working-index.ts`.*
+*Gerado para SPEC-SANKHYA-COMMUNITY-001 Fase 3. As 11 tools são registradas em `src/tools/working-index.ts`.*

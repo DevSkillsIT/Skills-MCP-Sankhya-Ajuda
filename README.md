@@ -13,7 +13,7 @@
 [![Python](https://img.shields.io/badge/Python-3.13-blue)](https://www.python.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B%20%2B%20pgvector-336791)](https://www.postgresql.org/)
 
-> **Servidor MCP (Model Context Protocol)** que torna pesquisável os **6.123 artigos** do help center público do ERP **Sankhya** (`ajuda.sankhya.com.br`) via **busca híbrida** (Reciprocal Rank Fusion sobre `pgvector` + FTS PT-BR com `unaccent`).
+> **Servidor MCP (Model Context Protocol)** que torna pesquisáveis **duas bases públicas** do ERP **Sankhya** — o **help center** (6.125 artigos, `ajuda.sankhya.com.br`) e a **comunidade** (7.619 posts de Q&A em 33 espaços, `community.sankhya.com.br`) — via **busca híbrida** (Reciprocal Rank Fusion sobre `pgvector` + FTS PT-BR com `unaccent`), incluindo **busca unificada source-aware** sobre as duas fontes.
 
 ---
 
@@ -39,15 +39,21 @@
 
 ## Visão Geral
 
-O **Sankhya Ajuda MCP** é um servidor desenvolvido internamente pela **Skills IT** que implementa o **Model Context Protocol (MCP)** para tornar pesquisável o help center público do ERP **Sankhya** (sistema brasileiro líder em gestão empresarial).
+O **Sankhya Ajuda MCP** é um servidor desenvolvido internamente pela **Skills IT** que implementa o **Model Context Protocol (MCP)** para tornar pesquisáveis as bases de conhecimento públicas do ERP **Sankhya** (sistema brasileiro líder em gestão empresarial).
 
-Este servidor permite que assistentes de IA (**Claude Desktop, Claude Code, Cursor, VS Code Copilot, ChatGPT/OpenAI Responses API**, e qualquer cliente MCP compatível) façam consultas estruturadas sobre os **6.123 artigos** indexados do help oficial, retornando:
+Indexa **duas fontes complementares** em um único banco PostgreSQL+pgvector:
 
-- 🔍 **Busca híbrida** com ranking de relevância (semântica + keyword)
-- 📖 **Conteúdo completo** dos artigos em Markdown limpo
-- 🗂️ **Hierarquia** de categorias e seções (14 + 230 + 59 subseções)
+- 📚 **Help center** (`ajuda.sankhya.com.br`, Zendesk) — **6.125 artigos** oficiais em 14 categorias / 230 seções
+- 💬 **Comunidade** (`community.sankhya.com.br`, Bettermode) — **7.619 posts de Q&A** (pergunta + respostas) em 33 espaços públicos
+
+Este servidor permite que assistentes de IA (**Claude Desktop, Claude Code, Cursor, VS Code Copilot, ChatGPT/OpenAI Responses API**, e qualquer cliente MCP compatível) façam consultas estruturadas sobre as duas bases, retornando:
+
+- 🔍 **Busca híbrida** com ranking de relevância (semântica + keyword) em cada fonte
+- 🔗 **Busca unificada source-aware** (`sankhya_ajuda_search_knowledge_unified`) — combina help center + comunidade com RRF por fonte, dedup por título e rótulo de origem oficial
+- 📖 **Conteúdo completo** de artigos e threads de Q&A em Markdown limpo
+- 🗂️ **Hierarquia** de categorias e seções (14 + 230 + 59 subseções) e espaços da comunidade (33)
 - 🤖 **Workflows nomeados** para troubleshooting, lookup, explicação de módulos e comparativos
-- 📊 **Estado da sincronização** via endpoint público `/health`
+- 📊 **Estado da sincronização** (das duas fontes) via endpoint público `/health`
 
 ### Casos de Uso
 
@@ -67,7 +73,8 @@ A ferramenta oficial de IA do Sankhya (**BIA — Business Intelligence Assistant
 
 | Característica | BIA (oficial) | Sankhya Ajuda MCP (Skills IT) |
 |---|---|---|
-| **Cobertura de artigos** | Limitada | ✅ 6.123 artigos indexados |
+| **Cobertura de conteúdo** | Limitada | ✅ 6.125 artigos (help center) + 7.619 posts (comunidade) indexados |
+| **Busca unificada (help + comunidade)** | ❌ | ✅ `sankhya_ajuda_search_knowledge_unified` com RRF por fonte + dedup + rótulo de origem |
 | **Busca semântica** | Restrita | ✅ pgvector + Qwen3 / OpenAI (mutuamente exclusivos) |
 | **Busca por código de erro** | Imprecisa | ✅ FTS PT-BR com `unaccent` |
 | **Acessível via IA externa** | ❌ | ✅ Claude, ChatGPT, Cursor, Copilot, etc. |
@@ -85,6 +92,8 @@ A ferramenta oficial de IA do Sankhya (**BIA — Business Intelligence Assistant
 5. **Tools-bridge** — adaptadores que expõem `resources/*` e `prompts/*` como tools regulares, para máxima compatibilidade
 6. **4 Prompts pré-configurados** — workflows guiados (troubleshoot, quick_lookup, explain_module, compare_articles)
 7. **Calibração empírica** — defaults `limit=15`, `max_body_chars=8000` baseados em distribuição real do corpus (P50-P99) e densidade de categorias (64% em 2 categorias)
+8. **Dupla fonte com busca unificada** — help center (Zendesk) + comunidade (Bettermode/GraphQL) no mesmo banco; `sankhya_ajuda_search_knowledge_unified` funde as duas com RRF por fonte, dedup por título e rótulo de origem oficial (impede que posts coloquiais "soterrem" os artigos oficiais)
+9. **Sync escalonado e resiliente** — ETLs independentes (help 03:00, comunidade 04:00) com `flock` compartilhado que serializa o acesso a Postgres+vLLM; estado de sync separado por fonte (`sync_state` / `community_sync_state`)
 
 ---
 
@@ -126,7 +135,7 @@ O projeto é composto por **duas fases desacopladas**, conversando apenas via sc
 │  ┌──────────────────────────────────────────────────────────────────┐  │
 │  │  Help Center (Zendesk):                                          │  │
 │  │  categories (14)  │  sections (230, 59 aninhadas)                │  │
-│  │  articles (6.123) │  embedding HALFVEC(2560) + tsvector FTS PT-BR │  │
+│  │  articles (6.125) │  embedding HALFVEC(2560) + tsvector FTS PT-BR │  │
 │  │  sync_state       │  skipped_articles  │  article_breadcrumb VIEW │  │
 │  │                                                                    │  │
 │  │  Comunidade (Bettermode):                                        │  │
@@ -394,8 +403,8 @@ curl http://localhost:3105/health | jq
 # {
 #   "status": "ok",
 #   "version": "1.0.0",
-#   "articles_count": 6123,
-#   "with_embedding_count": 6123,
+#   "articles_count": 6125,
+#   "with_embedding_count": 6125,
 #   "last_sync_status": "ok",
 #   ...
 # }
@@ -430,7 +439,7 @@ curl -s -X POST http://localhost:3105/mcp \
 
 | Tool | Categoria | Função |
 |---|---|---|
-| `sankhya_ajuda_search_articles` | Domínio | Busca híbrida (RRF) / semantic / keyword sobre os 6.123 artigos |
+| `sankhya_ajuda_search_articles` | Domínio | Busca híbrida (RRF) / semantic / keyword sobre os 6.125 artigos |
 | `sankhya_ajuda_get_article_details` | Domínio | Artigo completo em Markdown (com cap configurável de caracteres) |
 | `sankhya_ajuda_list_categories` | Domínio | Lista as 14 categorias top-level |
 | `sankhya_ajuda_list_sections` | Domínio | Lista 230 seções (com `category_id` e `parent_section_id` opcionais) |
@@ -482,7 +491,7 @@ Sankhya, o que significa o erro E0004 na NF-e?
 2. Recebe top-15 artigos (default) com URLs e similaridades
 3. Identifica o artigo mais relevante (top-1) e apresenta resposta com causa, solução e link oficial
 
-> 💡 **Default `limit=15`** (max 50). Use `limit=3-5` para busca rápida quando você quer só os artigos mais relevantes (ex: prompt `sankhya_quick_lookup`), e `limit=25-50` para análise comparativa ou exploração ampla. Calibrado para corpus de 6.123 artigos com 64% concentrados em 2 categorias.
+> 💡 **Default `limit=15`** (max 50). Use `limit=3-5` para busca rápida quando você quer só os artigos mais relevantes (ex: prompt `sankhya_quick_lookup`), e `limit=25-50` para análise comparativa ou exploração ampla. Calibrado para corpus de 6.125 artigos com 64% concentrados em 2 categorias.
 
 ---
 
@@ -649,8 +658,8 @@ Resposta esperada:
   "tenant": "skillsit",
   "last_sync_status": "ok",
   "last_sync_at": "2026-05-16T03:00:00.000Z",
-  "articles_count": 6123,
-  "with_embedding_count": 6123
+  "articles_count": 6125,
+  "with_embedding_count": 6125
 }
 ```
 
@@ -781,7 +790,7 @@ sankhya-sync                                # Native (com venv ativo)
 
 **Causa:** Resposta excede 400 KB (cap de proteção).
 
-**Solução:** Reduzir `limit` (em `search_articles`) ou `max_body_chars` (em `get_article_details`).
+**Solução:** Reduzir `limit` (em `sankhya_ajuda_search_articles`) ou `max_body_chars` (em `sankhya_ajuda_get_article_details`).
 
 📖 **Troubleshooting completo:** [`docs/OPERATIONS.md`](./docs/OPERATIONS.md#troubleshooting)
 

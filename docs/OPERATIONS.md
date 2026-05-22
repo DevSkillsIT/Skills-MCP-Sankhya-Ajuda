@@ -1,4 +1,4 @@
-# Operations Runbook
+# Runbook de Operação
 
 Práticas operacionais para o sync diário do `sankhya_ajuda`. Pressupõe acesso ao servidor com o container `postgres` rodando e ao caminho `/path/to/sankhya-ajuda-mcp/`.
 
@@ -238,7 +238,7 @@ Para um monitor externo (Prometheus / Grafana / cron com mail):
 | `skipped_articles` cresceu nas últimas 24h | Low | Conteúdo novo do Sankhya com artigos muito longos |
 | `outdated > 50` na base | Low | Sankhya marcou muito conteúdo obsoleto; revisar |
 
-> **Janela de escalonamento dos crons:** o help center roda às 03:00 e a comunidade às 04:00, com um `flock` compartilhado (`/var/lock/sankhya_ajuda_etl.lock`) que impede execução concorrente. Hoje o help center leva ~4-5 min (6.123 artigos). Se `last_duration_sec` em `sync_state` tender a subir (crescimento de corpus ou lentidão do Sankhya) e se aproximar de ~55 min, reavalie o horário da comunidade — o `flock` evita a sobreposição (o perdedor pula e se auto-recupera no dia seguinte, pois o sync é incremental), mas um atraso recorrente atrasaria a indexação da comunidade. Monitore `last_duration_sec` nas duas tabelas (`sync_state` e `community_sync_state`).
+> **Janela de escalonamento dos crons:** o help center roda às 03:00 e a comunidade às 04:00, com um `flock` compartilhado (`/var/lock/sankhya_ajuda_etl.lock`) que impede execução concorrente. Hoje o help center leva ~4-5 min (6.125 artigos). Se `last_duration_sec` em `sync_state` tender a subir (crescimento de corpus ou lentidão do Sankhya) e se aproximar de ~55 min, reavalie o horário da comunidade — o `flock` evita a sobreposição (o perdedor pula e se auto-recupera no dia seguinte, pois o sync é incremental), mas um atraso recorrente atrasaria a indexação da comunidade. Monitore `last_duration_sec` nas duas tabelas (`sync_state` e `community_sync_state`).
 
 Query base de alerta:
 ```sql

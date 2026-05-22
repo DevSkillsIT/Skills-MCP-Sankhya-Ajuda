@@ -8,7 +8,7 @@
 
 > Sub-projeto TypeScript. Documentação geral do projeto em [`../README.md`](../README.md). Guia de instalação em [`../docs/INSTALL.md`](../docs/INSTALL.md). Referência completa de todas as 11 tools em [`docs/TOOLS.md`](./docs/TOOLS.md).
 
-Servidor MCP (Streamable HTTP) que expõe a **base de conhecimento unificada do ERP Sankhya** — 6.123 artigos do help center público (`ajuda.sankhya.com.br`) **e** 7.618 posts do fórum da comunidade — para qualquer cliente MCP compatível com o protocolo **2025-11-25**: Claude Desktop, Claude Code, Cursor, VS Code Copilot, ChatGPT/OpenAI Responses API, e outros.
+Servidor MCP (Streamable HTTP) que expõe a **base de conhecimento unificada do ERP Sankhya** — 6.125 artigos do help center público (`ajuda.sankhya.com.br`) **e** 7.619 posts do fórum da comunidade — para qualquer cliente MCP compatível com o protocolo **2025-11-25**: Claude Desktop, Claude Code, Cursor, VS Code Copilot, ChatGPT/OpenAI Responses API, e outros.
 
 Implementa busca híbrida (Reciprocal Rank Fusion k=60) sobre similaridade semântica (pgvector + halfvec 2560d) e FTS PT-BR (`portuguese_unaccent`), com RRF cross-fonte para misturar help e comunidade numa única consulta.
 
@@ -37,7 +37,7 @@ Implementação das SPEC-SANKHYA-AJUDA-001 e SPEC-SANKHYA-COMMUNITY-001. Mirrors
 
 | Tool | Função |
 |---|---|
-| `sankhya_ajuda_search_articles` | Busca híbrida (RRF k=60) com modes `hybrid`/`semantic`/`keyword` sobre 6.123 artigos do help center. `limit` default 15, max 50 |
+| `sankhya_ajuda_search_articles` | Busca híbrida (RRF k=60) com modes `hybrid`/`semantic`/`keyword` sobre 6.125 artigos do help center. `limit` default 15, max 50 |
 | `sankhya_ajuda_get_article_details` | Artigo completo em Markdown (`max_body_chars` 100-40000, default 8000) |
 | `sankhya_ajuda_list_categories` | 14 categorias top-level do help center |
 | `sankhya_ajuda_list_sections` | 230 seções (filtros `category_id`, `parent_section_id`) |
@@ -184,8 +184,8 @@ Resposta esperada:
   "tenant": "skillsit",
   "last_sync_status": "ok",
   "last_sync_at": "2026-05-16T03:00:00.000Z",
-  "articles_count": 6123,
-  "with_embedding_count": 6123,
+  "articles_count": 6125,
+  "with_embedding_count": 6125,
   "error_count": 0
 }
 ```
@@ -274,9 +274,9 @@ mcp-server/
 │   │   ├── categories.ts              ← sankhya_ajuda_list_categories
 │   │   ├── sections.ts                ← sankhya_ajuda_list_sections
 │   │   ├── search-unified.ts          ← sankhya_ajuda_search_knowledge_unified (novo)
-│   │   ├── community.ts               ← get_community_post + list_community_spaces (novo)
-│   │   ├── resource-tools.ts          ← bridge: list_mcp_resources + read_resource_by_uri
-│   │   └── prompt-tools.ts            ← bridge: list_prompt_catalog + get_prompt_by_name
+│   │   ├── community.ts               ← sankhya_ajuda_get_community_post + sankhya_ajuda_list_community_spaces (novo)
+│   │   ├── resource-tools.ts          ← bridge: sankhya_ajuda_list_mcp_resources + sankhya_ajuda_read_resource_by_uri
+│   │   └── prompt-tools.ts            ← bridge: sankhya_ajuda_list_prompt_catalog + sankhya_ajuda_get_prompt_by_name
 │   │
 │   ├── search/
 │   │   └── rrf.ts                     ← crossSourceRRF + dedupCommunityByTitle (novo)
@@ -298,7 +298,7 @@ mcp-server/
 ├── tests/                             ← vitest unit tests
 │   ├── search/rrf.test.ts             ← crossSourceRRF + dedupCommunityByTitle
 │   ├── tools/search-unified.test.ts   ← runUnifiedSearch (mocked DB)
-│   ├── tools/community.test.ts        ← get_community_post + list_community_spaces
+│   ├── tools/community.test.ts        ← sankhya_ajuda_get_community_post + sankhya_ajuda_list_community_spaces
 │   ├── audit.test.ts                  ← AC08 compliance: 11 tools, annotations, naming
 │   └── integration/
 │       └── smoke-db.test.ts           ← AC02/03/07/09 (guarded: RUN_DB_SMOKE=1)

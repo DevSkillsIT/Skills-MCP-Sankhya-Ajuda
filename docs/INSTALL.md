@@ -65,7 +65,7 @@ Este documento explica como instalar e rodar o **Sankhya Ajuda MCP**. Escolha o 
    ```
    Se aparecer algo como `{"status":"ok",...}`, está funcionando ✅
 
-4. Carregue a base de dados (6.123 artigos do Sankhya)
+4. Carregue a base de dados (6.125 artigos do Sankhya)
    ```bash
    docker compose run --rm etl sankhya-sync
    ```
@@ -73,7 +73,7 @@ Este documento explica como instalar e rodar o **Sankhya Ajuda MCP**. Escolha o 
    **O que esperar**:
    - "Baixando artigos do Zendesk..." (2-5 minutos)
    - "Indexando no banco..." (depende de `EMBEDDING_PROVIDER`)
-   - Ao final: `✓ Sync completed: 6123 articles indexed`
+   - Ao final: `✓ Sync completed: 6125 articles indexed`
 
 5. Conecte um cliente MCP
 
