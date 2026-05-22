@@ -26,11 +26,11 @@ const TOOL_NAME = 'sankhya_ajuda_search_articles';
 
 const TOOL_DESCRIPTION =
   'Artigos de ajuda, documentacao, FAQ e manuais do ERP Sankhya — busca ' +
-  'hibrida combinando similaridade semantica (pgvector + halfvec 2560d) e ' +
-  'FTS PT-BR com unaccent sobre 6.123 artigos do help center oficial Sankhya ' +
-  '(ajuda.sankhya.com.br). Use quando o usuario descrever duvida, erro ou ' +
-  'topico do Sankhya. Retorna tabela Markdown paginada com titulo, ' +
-  'breadcrumb, URL e score.';
+  'hibrida (semantica pgvector + FTS PT-BR) sobre mais de 6.000 artigos do ' +
+  'help center oficial Sankhya (ajuda.sankhya.com.br). Use quando o usuario ' +
+  'descrever duvida, erro ou topico do Sankhya. Para forum/comunidade do ' +
+  'Sankhya, use sankhya_ajuda_search_knowledge_unified. Retorna tabela ' +
+  'Markdown com titulo, breadcrumb, URL e score.';
 
 const inputSchema = {
   query: z

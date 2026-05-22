@@ -181,13 +181,13 @@ describe.skipIf(!RUN_E2E)('MCP E2E — live server at http://127.0.0.1:3105', ()
         arguments: { query: 'parametrizacao nota fiscal', source: 'community', limit: 5 },
       });
       const text = extractText(unifiedResult);
-      // The unified search table exposes the REAL post_id in the ID column (3rd
-      // column: | Fonte | Oficial | ID | Título | ... |). Parse it directly — the
+      // The unified search table exposes the REAL post_id in the ID column (4th
+      // column: | # | Fonte | Oficial | ID | Título | ... |). Parse it directly — the
       // URL slug is the title-slug + id and is NOT a valid post_id by itself.
       for (const line of text.split('\n')) {
         if (!line.includes('COMUNIDADE')) continue;
         const cols = line.split('|').map((c) => c.trim());
-        const id = cols[3];
+        const id = cols[4];
         if (id && /^[A-Za-z0-9_-]{8,}$/.test(id)) {
           derivedCommunityPostId = id;
           break;
@@ -209,7 +209,7 @@ describe.skipIf(!RUN_E2E)('MCP E2E — live server at http://127.0.0.1:3105', ()
       for (const line of text2.split('\n')) {
         if (!line.includes('COMUNIDADE')) continue;
         const cols = line.split('|').map((c) => c.trim());
-        const id = cols[3];
+        const id = cols[4];
         if (id && /^[A-Za-z0-9_-]{8,}$/.test(id) && id !== derivedCommunityPostId) {
           derivedCommunityPostId2 = id;
           break;
@@ -556,8 +556,8 @@ describe.skipIf(!RUN_E2E)('MCP E2E — live server at http://127.0.0.1:3105', ()
         const rows = text.split('\n').filter((l) => l.startsWith('|') && !l.includes('---') && !l.includes('Fonte'));
         for (const row of rows) {
           const cols = row.split('|').map((c) => c.trim());
-          // Similaridade is the 6th column (0-indexed: 0=empty, 1=Fonte, ..., 6=Similaridade).
-          const simCol = cols[6];
+          // Similaridade is the 7th column (0-indexed: 0=empty, 1=#, 2=Fonte, ..., 7=Similaridade).
+          const simCol = cols[7];
           if (simCol !== undefined && simCol !== '' && simCol !== '—') {
             const val = Number(simCol);
             expect(

@@ -128,12 +128,15 @@ function communityHitToUnified(hit: CommunityHit, sourceRank: number): UnifiedHi
 /**
  * Format a list of UnifiedHits as Markdown table per RF01.8 (updated).
  *
- * Columns (R2): Fonte | Oficial | ID | Título | Contexto | Similaridade | URL
+ * Columns (R2): # | Fonte | Oficial | ID | Título | Contexto | Similaridade | URL
+ * # (R11): 1-indexed RRF rank — the monotonic, authoritative ordering anchor.
+ *   Added so a weak model has an unambiguous numeric rank to sort by, instead
+ *   of latching onto the non-monotonic Similaridade column.
  * Similaridade (R3): cosine similarity (0.000–1.000) or "—" in keyword mode.
  *   NOTE: label changed Score→Similaridade (R10) because the value is cosine
  *   similarity from 1-(embedding<=>qvec), NOT a rank or relevance percent.
  *   Hybrid RRF ranking makes this column non-monotonic with row order, so the
- *   label "Similaridade" prevents users from reading it as a rank score.
+ *   label "Similaridade" plus the explicit # rank prevent reading it as a rank.
  * Truncation (R4): Título ≤ 90 chars, Contexto ≤ 70 chars. URL never truncated.
  */
 function formatUnifiedMarkdown(hits: UnifiedHit[]): string {
@@ -141,22 +144,25 @@ function formatUnifiedMarkdown(hits: UnifiedHit[]): string {
     return 'Nenhum resultado encontrado.';
   }
 
-  const headers = ['Fonte', 'Oficial', 'ID', 'Título', 'Contexto', 'Similaridade', 'URL'];
+  const headers = ['#', 'Fonte', 'Oficial', 'ID', 'Título', 'Contexto', 'Similaridade', 'URL'];
   const lines: string[] = [];
 
-  // R10: rows are already in RRF rank order (best match first). The Similaridade
-  // column is the raw cosine per item and is NON-monotonic with row order, so a
-  // weak model must rank by ROW ORDER, not by this value.
+  // R10/R11: rows are already in RRF rank order (best match first), exposed in the
+  // monotonic "#" column. The Similaridade column is the raw cosine per item and is
+  // NON-monotonic with row order, so a weak model must rank by "#"/ROW ORDER, never
+  // by the cosine value.
   lines.push(
-    '_Ordenado por relevância (linha 1 = melhor match). A coluna Similaridade é ' +
-      'o cosseno cru de cada item e NÃO acompanha a ordem das linhas; use a ordem, ' +
-      'não o valor._',
+    '_Ordenado por relevância: a coluna # é o rank autoritativo (1 = melhor match). ' +
+      'A coluna Similaridade é o cosseno cru de cada item e NÃO acompanha a ordem; ' +
+      'use o # / a ordem, não o valor de Similaridade._',
   );
   lines.push('');
   lines.push('| ' + headers.join(' | ') + ' |');
   lines.push('|' + headers.map(() => '---|').join(''));
 
+  let rank = 0;
   for (const hit of hits) {
+    rank += 1;
     const fonte = hit.source === 'help' ? 'HELP' : 'COMUNIDADE';
     const oficial = hit.isOfficial ? 'Sim' : 'Não';
     const id = escapeMarkdown(hit.id);
@@ -168,7 +174,9 @@ function formatUnifiedMarkdown(hits: UnifiedHit[]): string {
     // URL must NEVER be truncated (the post id is at the end of the slug).
     const url = escapeMarkdown(hit.url);
 
-    lines.push(`| ${fonte} | ${oficial} | ${id} | ${titulo} | ${contexto} | ${score} | ${url} |`);
+    lines.push(
+      `| ${rank} | ${fonte} | ${oficial} | ${id} | ${titulo} | ${contexto} | ${score} | ${url} |`,
+    );
   }
 
   return lines.join('\n');

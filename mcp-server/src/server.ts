@@ -23,13 +23,13 @@ import { SERVER_VERSION } from './version.js';
  * Returned in every initialize handshake.
  */
 export const SERVER_INSTRUCTIONS = `MCP do Help Center publico do Sankhya ERP (ajuda.sankhya.com.br, Zendesk).
-6.123 artigos indexados em pt-BR. Somente leitura.
+Mais de 6.000 artigos indexados em pt-BR. Somente leitura.
 
 REGRAS CRITICAS:
 1. ECONOMIA: 1 call de search_articles ja retorna top-N com breadcrumb. Nao
    chame get_article_details em loop.
 2. LIMIT default 15 (max 50). Use 5 para resposta rapida, 25-50 para analise
-   comparativa ou exploracao de tema novo. Corpus tem 6.123 artigos, 64%
+   comparativa ou exploracao de tema novo. Corpus tem mais de 6.000 artigos, 64%
    concentrados em 2 categorias (Solucao de Problemas + Documentacao de Telas).
 3. BUSCA HIBRIDA: mode=hybrid (default) combina semantica + FTS via RRF.
    Use semantic para sinonimos, keyword para codigo de erro/nome exato.
