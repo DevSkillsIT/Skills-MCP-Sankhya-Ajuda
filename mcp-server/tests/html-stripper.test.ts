@@ -54,6 +54,36 @@ describe('truncate', () => {
     expect(out.length).toBe(300);
     expect(out.endsWith('…')).toBe(true);
   });
+
+  // Hardening: code-point safety for surrogate pairs (emoji / astral plane).
+  it('truncates at code-point boundary — emoji is never split into a broken surrogate', () => {
+    // Each emoji below is a surrogate pair: 2 UTF-16 units but 1 code point.
+    // A string of 5 emoji = 10 UTF-16 units (length 10), but only 5 code points.
+    const fiveEmoji = '😀😁😂😃😄'; // 5 code points, .length === 10
+    expect(fiveEmoji.length).toBe(10); // sanity-check: JS .length counts units
+
+    // Truncate to maxLen=3: should keep 2 code points + '…' = 3 code points total.
+    const out = truncate(fiveEmoji, 3);
+
+    // The result must be exactly 2 emoji + ellipsis (3 code points).
+    const outCodePoints = [...out];
+    expect(outCodePoints).toHaveLength(3);
+
+    // The last code point must be the ellipsis marker.
+    expect(outCodePoints[outCodePoints.length - 1]).toBe('…');
+
+    // The first two code points must each be a valid single emoji (not a lone surrogate).
+    // A lone surrogate would be U+D800–U+DFFF; a valid emoji round-trips through encode/decode.
+    for (const cp of outCodePoints.slice(0, 2)) {
+      expect(() => encodeURIComponent(cp)).not.toThrow();
+    }
+  });
+
+  it('returns the original string unchanged when emoji string fits within maxLen', () => {
+    const threeEmoji = '🚀🎉🔥'; // 3 code points, .length === 6
+    // maxLen=5 is larger than 3 code points, so no truncation should occur.
+    expect(truncate(threeEmoji, 5)).toBe(threeEmoji);
+  });
 });
 
 describe('escapeMarkdown', () => {

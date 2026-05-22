@@ -88,7 +88,8 @@ Esperado:
 A ETL roda **sob demanda**, não em loop. Use `docker compose run` para rodar uma vez:
 
 ```bash
-docker compose run --rm etl sankhya-sync
+docker compose run --rm etl sankhya-sync            # help center
+docker compose run --rm etl sankhya-community-sync  # comunidade (Bettermode)
 ```
 
 Tempo estimado: **5-15 minutos** dependendo do provider de embeddings e latência de rede.
@@ -109,8 +110,10 @@ sudo crontab -e
 ```
 
 ```cron
-# Sankhya Ajuda — sync diário às 03:00
+# Sankhya Ajuda — help center @ 03:00
 0 3 * * * cd /opt/sankhya-ajuda-mcp && /usr/bin/docker compose run --rm etl sankhya-sync >> /var/log/sankhya-ajuda-sync.log 2>&1
+# Sankhya Ajuda — comunidade (Bettermode) @ 04:00 (escalonado p/ não disputar Postgres+vLLM com o de cima)
+0 4 * * * cd /opt/sankhya-ajuda-mcp && /usr/bin/docker compose run --rm etl sankhya-community-sync >> /var/log/sankhya-ajuda-community-sync.log 2>&1
 ```
 
 ### Profile `gpu` (opcional, com vLLM containerizado)
@@ -167,9 +170,13 @@ $EDITOR .env
 
 ```bash
 sudo ./scripts/setup_db.sh
+
+# Carregue os schemas (uma única vez; ambos idempotentes)
+psql -h localhost -p 5433 -U sankhya_ajuda -d sankhya_ajuda -f sql/schema.sql            # help center
+psql -h localhost -p 5433 -U sankhya_ajuda -d sankhya_ajuda -f sql/community_schema.sql  # comunidade
 ```
 
-O script cria a role `sankhya_ajuda`, o database `sankhya_ajuda`, e habilita extensions `vector`, `unaccent`, `pg_trgm`.
+O `setup_db.sh` cria a role `sankhya_ajuda`, o database `sankhya_ajuda` e habilita as extensions `vector`, `unaccent`, `pg_trgm`. As tabelas são criadas pelos dois arquivos `sql/*.sql` (no Path A o Docker aplica ambos automaticamente no primeiro start; aqui aplicamos à mão).
 
 ### Passo 3 — Fase 1 (ETL Python)
 
@@ -179,7 +186,8 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 
 # Primeira sincronização (~10 min)
-sankhya-sync
+sankhya-sync            # help center
+sankhya-community-sync  # comunidade (Bettermode)
 ```
 
 Validar:
@@ -192,9 +200,16 @@ psql -h localhost -p 5433 -U sankhya_ajuda -d sankhya_ajuda \
 ### Passo 4 — Cron diário
 
 ```bash
-sudo cp scripts/sankhya_ajuda_sync.cron      /etc/cron.d/sankhya-ajuda-sync
-sudo cp scripts/sankhya_ajuda_sync.logrotate /etc/logrotate.d/sankhya-ajuda-sync
+# Help center @ 03:00
+sudo cp scripts/sankhya_ajuda_sync.cron      /etc/cron.d/sankhya_ajuda_sync
+sudo cp scripts/sankhya_ajuda_sync.logrotate /etc/logrotate.d/sankhya_ajuda_sync
+
+# Comunidade (Bettermode) @ 04:00 — escalonado p/ não disputar Postgres+vLLM com o de cima
+sudo cp scripts/sankhya_ajuda_community_sync.cron      /etc/cron.d/sankhya_ajuda_community_sync
+sudo cp scripts/sankhya_ajuda_community_sync.logrotate /etc/logrotate.d/sankhya_ajuda_community_sync
 ```
+
+> Ambos os templates trazem o placeholder `/path/to/sankhya-ajuda-mcp` — ajuste para o caminho real do repo antes (ou depois) de copiar.
 
 ### Passo 5 — Fase 2 (MCP Server TypeScript)
 

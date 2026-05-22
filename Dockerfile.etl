@@ -4,6 +4,10 @@
 # Skills IT — Soluções em Tecnologia
 # https://www.skillsit.com.br  ·  (63) 3224-4925  ·  Palmas-TO-Brasil
 #
+# Ships BOTH ETL entry points (same image, same deps):
+#   sankhya-sync            → help center (Zendesk)
+#   sankhya-community-sync  → community (Bettermode)
+#
 # Multi-stage build: builder installs deps in a virtualenv; final stage
 # copies only `.venv` + source — ~60% smaller than single-stage.
 
@@ -39,7 +43,7 @@ RUN /opt/venv/bin/pip install -e .
 FROM python:3.13-slim AS final
 
 LABEL org.opencontainers.image.title="sankhya-ajuda-etl" \
-      org.opencontainers.image.description="Sankhya Help Center ETL (Phase 1) — scrapes ajuda.sankhya.com.br, embeds with vLLM/OpenAI, populates Postgres+pgvector" \
+      org.opencontainers.image.description="Sankhya Ajuda ETL (Phase 1) — scrapes the help center (ajuda.sankhya.com.br) and the community (community.sankhya.com.br), embeds with vLLM/OpenAI, populates Postgres+pgvector" \
       org.opencontainers.image.vendor="Skills IT — Soluções em Tecnologia" \
       org.opencontainers.image.authors="Skills IT <contato@skillsit.com.br>" \
       org.opencontainers.image.url="https://www.skillsit.com.br" \
@@ -65,5 +69,6 @@ COPY --from=builder /build/sql/ ./sql/
 
 USER sankhya
 
-# Default command: run a full sync. Override via `docker run ... <other cmd>`.
+# Default command: full help-center sync. Override with `sankhya-community-sync`
+# (or any other cmd) via `docker compose run --rm etl <cmd>`.
 CMD ["sankhya-sync"]

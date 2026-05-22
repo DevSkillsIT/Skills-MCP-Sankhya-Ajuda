@@ -1,18 +1,18 @@
 <!--
-  Sankhya Ajuda MCP Server - Fase 2 (TypeScript)
+  Sankhya Ajuda MCP Server - Fase 3 (TypeScript)
   Skills IT - Solucoes em Tecnologia
   https://www.skillsit.com.br  |  (63) 3224-4925  |  Palmas-TO-Brasil
 -->
 
-# Sankhya Ajuda MCP Server (Fase 2)
+# Sankhya Ajuda MCP Server
 
-> Sub-projeto TypeScript. Documentação geral do projeto em [`../README.md`](../README.md). Guia de instalação em [`../docs/INSTALL.md`](../docs/INSTALL.md). Referência das tools em [`../docs/TOOLS.md`](../docs/TOOLS.md).
+> Sub-projeto TypeScript. Documentação geral do projeto em [`../README.md`](../README.md). Guia de instalação em [`../docs/INSTALL.md`](../docs/INSTALL.md). Referência completa de todas as 11 tools em [`docs/TOOLS.md`](./docs/TOOLS.md).
 
-Servidor MCP (Streamable HTTP) que expõe o **help center público do ERP Sankhya** (`ajuda.sankhya.com.br`, 6.123 artigos) para qualquer cliente MCP compatível com o protocolo **2025-11-25** — Claude Desktop, Claude Code, Cursor, VS Code Copilot, ChatGPT/OpenAI Responses API, e outros.
+Servidor MCP (Streamable HTTP) que expõe a **base de conhecimento unificada do ERP Sankhya** — 6.123 artigos do help center público (`ajuda.sankhya.com.br`) **e** 7.618 posts do fórum da comunidade — para qualquer cliente MCP compatível com o protocolo **2025-11-25**: Claude Desktop, Claude Code, Cursor, VS Code Copilot, ChatGPT/OpenAI Responses API, e outros.
 
-Implementa busca híbrida (Reciprocal Rank Fusion k=60) sobre similaridade semântica (pgvector) e FTS PT-BR (`portuguese_unaccent`).
+Implementa busca híbrida (Reciprocal Rank Fusion k=60) sobre similaridade semântica (pgvector + halfvec 2560d) e FTS PT-BR (`portuguese_unaccent`), com RRF cross-fonte para misturar help e comunidade numa única consulta.
 
-Fase 2 do projeto `sankhya_ajuda` — SPEC-SANKHYA-AJUDA-001. Mirrors os padrões validados em produção de `omie-erp` e `gseonline` (também MCPs da Skills IT).
+Implementação das SPEC-SANKHYA-AJUDA-001 e SPEC-SANKHYA-COMMUNITY-001. Mirrors os padrões validados em produção de `omie-erp` e `gseonline` (também MCPs da Skills IT).
 
 ---
 
@@ -31,17 +31,37 @@ Fase 2 do projeto `sankhya_ajuda` — SPEC-SANKHYA-AJUDA-001. Mirrors os padrõe
 
 ## Superfície MCP
 
-### 8 Tools
+### 11 Tools
+
+#### Busca e Navegação (Help Center)
 
 | Tool | Função |
 |---|---|
-| `sankhya_ajuda_search_articles` | Busca híbrida (RRF k=60) com modes `hybrid`/`semantic`/`keyword`. `limit` default 15, max 50 |
+| `sankhya_ajuda_search_articles` | Busca híbrida (RRF k=60) com modes `hybrid`/`semantic`/`keyword` sobre 6.123 artigos do help center. `limit` default 15, max 50 |
 | `sankhya_ajuda_get_article_details` | Artigo completo em Markdown (`max_body_chars` 100-40000, default 8000) |
-| `sankhya_ajuda_list_categories` | 14 categorias top-level |
+| `sankhya_ajuda_list_categories` | 14 categorias top-level do help center |
 | `sankhya_ajuda_list_sections` | 230 seções (filtros `category_id`, `parent_section_id`) |
-| `sankhya_ajuda_list_mcp_resources` | Bridge: lista 6 URIs MCP |
+
+#### Busca Unificada (Help + Comunidade)
+
+| Tool | Função |
+|---|---|
+| `sankhya_ajuda_search_knowledge_unified` | Busca unificada sobre help center **e** fórum da comunidade Sankhya em uma consulta, com ranking RRF cross-fonte e rótulo de fonte/oficial. `source ∈ {help, community, all}` (default `all`) |
+
+#### Comunidade Sankhya
+
+| Tool | Função |
+|---|---|
+| `sankhya_ajuda_get_community_post` | Thread completo de um post da comunidade (perguntas, respostas e replies aninhadas) a partir do `post_id` |
+| `sankhya_ajuda_list_community_spaces` | Lista os 33 espaços públicos do fórum da comunidade Sankhya (id, nome, slug, URL, posts\_count, members\_count) |
+
+#### Bridge MCP (Resources e Prompts)
+
+| Tool | Função |
+|---|---|
+| `sankhya_ajuda_list_mcp_resources` | Bridge: lista 6 URIs MCP disponíveis |
 | `sankhya_ajuda_read_resource_by_uri` | Bridge: lê uma URI `sankhya-ajuda://` |
-| `sankhya_ajuda_list_prompt_catalog` | Bridge: lista 4 prompts |
+| `sankhya_ajuda_list_prompt_catalog` | Bridge: lista 4 prompts pré-configurados |
 | `sankhya_ajuda_get_prompt_by_name` | Bridge: executa prompt parametrizado |
 
 ### 6 Resources (`sankhya-ajuda://`)
@@ -237,24 +257,29 @@ mcp-server/
 │   ├── index.ts                       ← entry point
 │   ├── server.ts                      ← McpServer factory
 │   ├── config.ts                      ← zod settings (env)
-│   ├── db.ts                          ← PostgreSQL queries + pgvector
+│   ├── db.ts                          ← PostgreSQL queries + pgvector + community funcs
 │   ├── embeddings.ts                  ← vLLM + OpenAI clients
 │   ├── index-compat.ts                ← guardrail cross-model (v1.5.4)
 │   ├── resources.ts                   ← 6 resources sankhya-ajuda://
 │   ├── prompts.ts                     ← 4 prompts MCP
 │   ├── version.ts                     ← versão do servidor
-│   ├── types.ts                       ← tipos compartilhados
+│   ├── types.ts                       ← tipos compartilhados (UnifiedHit, CommunityHit, ...)
 │   ├── logger.ts                      ← pino setup
 │   │
 │   ├── tools/
 │   │   ├── base.ts                    ← createSuccess/Error/Cap helpers
-│   │   ├── working-index.ts           ← registerAllTools
+│   │   ├── working-index.ts           ← registerAllTools (11 tools)
 │   │   ├── search.ts                  ← sankhya_ajuda_search_articles
 │   │   ├── articles.ts                ← sankhya_ajuda_get_article_details
 │   │   ├── categories.ts              ← sankhya_ajuda_list_categories
 │   │   ├── sections.ts                ← sankhya_ajuda_list_sections
+│   │   ├── search-unified.ts          ← sankhya_ajuda_search_knowledge_unified (novo)
+│   │   ├── community.ts               ← get_community_post + list_community_spaces (novo)
 │   │   ├── resource-tools.ts          ← bridge: list_mcp_resources + read_resource_by_uri
 │   │   └── prompt-tools.ts            ← bridge: list_prompt_catalog + get_prompt_by_name
+│   │
+│   ├── search/
+│   │   └── rrf.ts                     ← crossSourceRRF + dedupCommunityByTitle (novo)
 │   │
 │   ├── formatters/
 │   │   ├── entity.ts                  ← formatadores de domain objects
@@ -270,7 +295,14 @@ mcp-server/
 │   └── utils/
 │       └── html-stripper.ts           ← sanitização HTML residual
 │
-├── tests/                             ← vitest unit + integration tests
+├── tests/                             ← vitest unit tests
+│   ├── search/rrf.test.ts             ← crossSourceRRF + dedupCommunityByTitle
+│   ├── tools/search-unified.test.ts   ← runUnifiedSearch (mocked DB)
+│   ├── tools/community.test.ts        ← get_community_post + list_community_spaces
+│   ├── audit.test.ts                  ← AC08 compliance: 11 tools, annotations, naming
+│   └── integration/
+│       └── smoke-db.test.ts           ← AC02/03/07/09 (guarded: RUN_DB_SMOKE=1)
+├── docs/TOOLS.md                      ← referência completa de todas as 11 tools
 ├── ecosystem.http.config.cjs          ← config PM2
 ├── Dockerfile                         ← imagem multi-stage Node
 ├── .env.example
@@ -282,7 +314,9 @@ mcp-server/
 
 ## SPEC e Histórico
 
-Implementação completa conforme [`SPEC-SANKHYA-AJUDA-001`](../../.moai/specs/SPEC-SANKHYA-AJUDA-001/spec.md).
+Implementações:
+- [`SPEC-SANKHYA-AJUDA-001`](../../.moai/specs/SPEC-SANKHYA-AJUDA-001/spec.md) — help center, busca híbrida, resources, prompts.
+- [`SPEC-SANKHYA-COMMUNITY-001`](../../.moai/specs/SPEC-SANKHYA-COMMUNITY-001/spec.md) — busca unificada (help + comunidade), RRF cross-fonte, ferramentas de domínio da comunidade.
 
 Histórico de versões em [`../CHANGELOG.md`](../CHANGELOG.md).
 

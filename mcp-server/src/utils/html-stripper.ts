@@ -94,10 +94,24 @@ export function stripHtml(html: string): string {
 
 /**
  * Truncate a string with an ellipsis marker, returning the original when short.
+ *
+ * Operates on Unicode code points (not UTF-16 code units) so that surrogate
+ * pairs (emoji, astral-plane characters) are never split at the boundary.
+ * The ellipsis character '…' counts as one code point in the output.
  */
 export function truncate(text: string, maxLen: number = 300): string {
+  // Fast path: .length counts UTF-16 units; if it is already within the limit
+  // then no code point can be over the limit either (BMP chars are 1 unit each,
+  // and an astral pair is 2 units => even more over budget if present).
   if (text.length <= maxLen) return text;
-  return text.slice(0, Math.max(0, maxLen - 1)) + '…';
+
+  // Spread into code points to avoid splitting surrogate pairs.
+  const codePoints = [...text];
+  if (codePoints.length <= maxLen) return text;
+
+  // Keep (maxLen - 1) code points and append the ellipsis (1 code point),
+  // matching the original semantics exactly.
+  return codePoints.slice(0, Math.max(0, maxLen - 1)).join('') + '…';
 }
 
 /**

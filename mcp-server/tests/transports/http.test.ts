@@ -92,8 +92,11 @@ describe('GET /health (AC01 / QG01) — public, no auth', () => {
       status: 'degraded',
       last_sync_status: 'error',
       error_count: 2,
-      last_error: 'Zendesk timeout',
+      // Security: expose only that an error occurred, never the raw text.
+      last_error: 'see server logs',
     });
+    // The raw sync error must NOT leak on the public (no-auth) endpoint.
+    expect(JSON.stringify(res.body)).not.toContain('Zendesk timeout');
   });
 });
 

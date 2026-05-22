@@ -6,7 +6,8 @@
 #
 # Default profile:  postgres + mcp-server
 #   $ docker compose up -d
-#   $ docker compose run --rm etl sankhya-sync          # primeira indexação
+#   $ docker compose run --rm etl sankhya-sync            # indexa o help center
+#   $ docker compose run --rm etl sankhya-community-sync  # indexa a comunidade
 #
 # GPU profile (opcional):  + vLLM containerizado (requer nvidia-docker2)
 #   $ docker compose --profile gpu up -d
@@ -29,7 +30,11 @@ services:
       POSTGRES_PASSWORD: ${PG_PASSWORD:?PG_PASSWORD is required in .env}
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      # initdb runs these in name order, ONCE, on an empty data dir. The help
+      # schema (01) creates the shared text-search config the community schema
+      # (02) guards against; both are idempotent and safe to reapply by hand.
       - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./sql/community_schema.sql:/docker-entrypoint-initdb.d/02-community-schema.sql:ro
     ports:
       - "${PG_PORT:-5433}:5432"
     healthcheck:
@@ -67,6 +72,14 @@ services:
       SANKHYA_HC_BASE:   ${SANKHYA_HC_BASE:-https://ajuda.sankhya.com.br}
       SANKHYA_HC_LOCALE: ${SANKHYA_HC_LOCALE:-pt-br}
       SANKHYA_HC_DELAY:  ${SANKHYA_HC_DELAY:-0.3}
+      # Community source (Bettermode) — used by `sankhya-community-sync`.
+      # Guest token is fetched at runtime; no API key needed.
+      SANKHYA_COMMUNITY_API_URL:              ${SANKHYA_COMMUNITY_API_URL:-https://api.bettermode.com}
+      SANKHYA_COMMUNITY_NETWORK_DOMAIN:       ${SANKHYA_COMMUNITY_NETWORK_DOMAIN:-community.sankhya.com.br}
+      SANKHYA_COMMUNITY_PAGE_SIZE:            ${SANKHYA_COMMUNITY_PAGE_SIZE:-20}
+      SANKHYA_COMMUNITY_DELAY:                ${SANKHYA_COMMUNITY_DELAY:-0.3}
+      SANKHYA_COMMUNITY_TIMEOUT:              ${SANKHYA_COMMUNITY_TIMEOUT:-60}
+      SANKHYA_COMMUNITY_TOKEN_REFRESH_MARGIN: ${SANKHYA_COMMUNITY_TOKEN_REFRESH_MARGIN:-300}
       SYNC_LOG_LEVEL:    ${SYNC_LOG_LEVEL:-INFO}
     networks:
       - sankhya-net

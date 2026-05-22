@@ -4,9 +4,16 @@
  */
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import pino from 'pino';
 
 /** Hard cap on a single tool response body in bytes (RNF02 / MP-10.2). */
 export const RESPONSE_BYTE_CAP = 400_000;
+
+/**
+ * Server-side logger for tool error detail. The raw error is logged HERE and
+ * never echoed to the client (see createInternalErrorResponse).
+ */
+const toolErrorLog = pino({ name: 'sankhya-ajuda-tools' });
 
 /** Thrown when a tool response exceeds RESPONSE_BYTE_CAP. */
 export class McpResponseTooLargeError extends Error {
@@ -63,15 +70,45 @@ export function createErrorResponse(
   };
 }
 
-/** Convenience builder for NOT_FOUND tool errors. */
+/**
+ * Build an INTERNAL_ERROR response WITHOUT leaking internal detail to the
+ * client. The raw error — which may expose DB schema, SQL fragments, connection
+ * strings, or filesystem paths — is logged server-side only; the caller gets a
+ * generic, actionable pt-BR message.
+ *
+ * @param err           - The caught error (logged server-side, never returned).
+ * @param clientMessage - Already-composed 3-part pt-BR message (what failed +
+ *   Esperado + Sugestao). Do NOT append the raw error to it.
+ */
+export function createInternalErrorResponse(
+  err: unknown,
+  clientMessage: string,
+): CallToolResult {
+  const detail = err instanceof Error ? (err.stack ?? err.message) : String(err);
+  toolErrorLog.error({ detail }, 'tool internal error');
+  return createErrorResponse(clientMessage, 'INTERNAL_ERROR');
+}
+
+/**
+ * Convenience builder for NOT_FOUND tool errors.
+ *
+ * @param entity     - Entity type label (e.g. "Post", "Artigo").
+ * @param identifier - The identifier that was not found.
+ * @param suggestion - Actionable suggestion for the caller.
+ * @param expected   - Optional override for the "Esperado" clause.
+ *   Defaults to "identificador valido do help center" to preserve
+ *   existing get_article_details behaviour (R5).
+ */
 export function errorNotFound(
   entity: string,
   identifier: string | number,
   suggestion: string,
+  expected?: string,
 ): CallToolResult {
+  const expectedClause = expected ?? 'identificador valido do help center';
   const message =
     `${entity} ${identifier} nao encontrado no Sankhya. ` +
-    `Esperado: identificador valido do help center. ` +
+    `Esperado: ${expectedClause}. ` +
     `Sugestao: ${suggestion}`;
   return createErrorResponse(message, 'NOT_FOUND');
 }

@@ -14,6 +14,7 @@ import { EmbeddingError } from '../embeddings.js';
 import {
   createSuccessResponse,
   createErrorResponse,
+  createInternalErrorResponse,
   McpResponseTooLargeError,
 } from './base.js';
 import { formatToolResponse } from '../formatters/response-formatter.js';
@@ -102,11 +103,10 @@ export function registerSearchTool(server: McpServer, ctx: ToolContext): void {
         if (err instanceof McpResponseTooLargeError) {
           return createErrorResponse(err.message, 'RESPONSE_TOO_LARGE');
         }
-        const msg = err instanceof Error ? err.message : String(err);
-        return createErrorResponse(
+        return createInternalErrorResponse(
+          err,
           `Erro inesperado na busca. Esperado: banco e vLLM disponiveis. ` +
-            `Sugestao: tente novamente ou troque para mode=keyword. Detalhe: ${msg}`,
-          'INTERNAL_ERROR',
+            `Sugestao: tente novamente ou troque para mode=keyword.`,
         );
       }
     },

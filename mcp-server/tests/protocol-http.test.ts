@@ -168,7 +168,9 @@ describe('MCP protocol over Streamable HTTP', () => {
     });
     const toolsBody = tools.body as { result: { tools: Array<{ name: string }> } };
     expect(tools.res.status).toBe(200);
-    expect(toolsBody.result.tools).toHaveLength(8);
+    // Phase 1 adds sankhya_ajuda_search_knowledge_unified → 9 tools.
+    // Phase 2 adds get_community_post + list_community_spaces → 11 tools total.
+    expect(toolsBody.result.tools).toHaveLength(11);
     expect(toolsBody.result.tools.map((t) => t.name)).toContain(
       'sankhya_ajuda_read_resource_by_uri',
     );

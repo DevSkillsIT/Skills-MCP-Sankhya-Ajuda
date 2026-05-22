@@ -14,6 +14,7 @@ import {
 import {
   createSuccessResponse,
   createErrorResponse,
+  createInternalErrorResponse,
   McpResponseTooLargeError,
 } from './base.js';
 import { formatTable } from '../formatters/markdown.js';
@@ -68,11 +69,10 @@ export function registerPromptTools(server: McpServer, _ctx: ToolContext): void 
         const table = formatTable(['Nome', 'Descricao', 'Argumentos'], rows);
         return createSuccessResponse(`${header}\n\n${table}\n\n_(\\* obrigatorio, ? opcional)_`);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        return createErrorResponse(
+        return createInternalErrorResponse(
+          err,
           `Erro ao listar prompts. Esperado: registry valido. ` +
-            `Sugestao: reporte o problema. Detalhe: ${msg}`,
-          'INTERNAL_ERROR',
+            `Sugestao: reporte o problema.`,
         );
       }
     },
@@ -124,11 +124,10 @@ export function registerPromptTools(server: McpServer, _ctx: ToolContext): void 
         if (err instanceof McpResponseTooLargeError) {
           return createErrorResponse(err.message, 'RESPONSE_TOO_LARGE');
         }
-        const msg = err instanceof Error ? err.message : String(err);
-        return createErrorResponse(
+        return createInternalErrorResponse(
+          err,
           `Erro ao executar prompt. Esperado: prompt e args validos. ` +
-            `Sugestao: tente novamente. Detalhe: ${msg}`,
-          'INTERNAL_ERROR',
+            `Sugestao: tente novamente.`,
         );
       }
     },

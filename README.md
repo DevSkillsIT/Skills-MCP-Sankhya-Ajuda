@@ -5,7 +5,7 @@
 
 # Sankhya Ajuda MCP
 
-> **Status:** ✅ Em produção · **Versão:** 1.5.6 · **Endpoint padrão:** `http://<host>:3105/mcp` · **Tools:** 8 · **Resources:** 6 · **Prompts:** 4 · **Desenvolvido por:** [Skills IT](https://www.skillsit.com.br)
+> **Status:** ✅ Em produção · **Versão:** 1.5.6 · **Endpoint padrão:** `http://<host>:3105/mcp` · **Tools:** 11 · **Resources:** 6 · **Prompts:** 4 · **Desenvolvido por:** [Skills IT](https://www.skillsit.com.br)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![MCP Protocol](https://img.shields.io/badge/MCP-2025--11--25-orange)](https://modelcontextprotocol.io)
@@ -72,7 +72,7 @@ A ferramenta oficial de IA do Sankhya (**BIA — Business Intelligence Assistant
 | **Busca por código de erro** | Imprecisa | ✅ FTS PT-BR com `unaccent` |
 | **Acessível via IA externa** | ❌ | ✅ Claude, ChatGPT, Cursor, Copilot, etc. |
 | **Histórico/cache local** | ❌ | ✅ PostgreSQL próprio |
-| **Atualização** | ? | ✅ Cron diário às 03:00 (SHA256 change detection) |
+| **Atualização** | ? | ✅ Cron diário (help center 03:00 + comunidade 04:00, SHA256 change detection) |
 | **Sem custo recorrente** | ❌ (B.I.A é parte do plano) | ✅ Opção `EMBEDDING_PROVIDER=none` zero cost |
 | **Auto-hospedado** | ❌ | ✅ Docker ou PM2 nativo |
 
@@ -106,9 +106,9 @@ O projeto é composto por **duas fases desacopladas**, conversando apenas via sc
 │  Default port :3105                                                      │
 │                                                                          │
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌────────────────┐ │
-│  │  4 tools     │ │  4 bridge    │ │  6 resources │ │  4 prompts     │ │
-│  │  domínio     │ │  tools       │ │  sankhya-    │ │  workflows     │ │
-│  │              │ │              │ │  ajuda://    │ │  nomeados      │ │
+│  │  7 tools     │ │  4 bridge    │ │  6 resources │ │  4 prompts     │ │
+│  │  (domínio +  │ │  tools       │ │  sankhya-    │ │  workflows     │ │
+│  │  comunidade) │ │              │ │  ajuda://    │ │  nomeados      │ │
 │  └──────────────┘ └──────────────┘ └──────────────┘ └────────────────┘ │
 │                                                                          │
 │  ┌────────────────────────────────────────────────────────────────────┐ │
@@ -124,9 +124,14 @@ O projeto é composto por **duas fases desacopladas**, conversando apenas via sc
 │  PostgreSQL 16+ com pgvector + unaccent + pg_trgm                       │
 │                                                                          │
 │  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  Help Center (Zendesk):                                          │  │
 │  │  categories (14)  │  sections (230, 59 aninhadas)                │  │
 │  │  articles (6.123) │  embedding HALFVEC(2560) + tsvector FTS PT-BR │  │
 │  │  sync_state       │  skipped_articles  │  article_breadcrumb VIEW │  │
+│  │                                                                    │  │
+│  │  Comunidade (Bettermode):                                        │  │
+│  │  community_spaces (33 públicos)  │  community_posts (7.619)      │  │
+│  │  community_sync_state            │  community_skipped_posts      │  │
 │  └──────────────────────────────────────────────────────────────────┘  │
 │                                                                          │
 │         Índices: HNSW pgvector + GIN FTS + btree partial outdated       │
@@ -137,17 +142,24 @@ O projeto é composto por **duas fases desacopladas**, conversando apenas via sc
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  ETL Sankhya Ajuda (FASE 1 — Python 3.13)                               │
 │                                                                          │
-│  Zendesk Help Center API (público, sem auth)                            │
-│         │                                                                │
-│         ▼                                                                │
-│  httpx → BeautifulSoup (HTML strip) → SHA256 diff →                     │
-│  vLLM/OpenAI embedding → PostgreSQL upsert                              │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Help Center (sync.sync 03:00)                                  │    │
+│  │  Zendesk Help Center API (público, sem auth)                    │    │
+│  │    → httpx → BeautifulSoup (HTML strip)                         │    │
+│  │    → SHA256 diff → vLLM/OpenAI embedding → PostgreSQL upsert   │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Comunidade (sync.community_sync 04:00)                         │    │
+│  │  Bettermode GraphQL (guest token em runtime, sem API key)      │    │
+│  │    → httpx → Q&A thread composition + markdown                  │    │
+│  │    → SHA256 diff → vLLM/OpenAI embedding → PostgreSQL upsert   │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────────────┘
                                     ▲
                                     │
-                          https://ajuda.sankhya.com.br
-                                (Help Center público,
-                                 hospedado no Zendesk)
+                    https://ajuda.sankhya.com.br (Help)
+                 https://community.sankhya.com.br (Comunidade)
 ```
 
 ### Componentes
@@ -414,7 +426,7 @@ curl -s -X POST http://localhost:3105/mcp \
 
 📖 **Referência completa:** [`docs/TOOLS.md`](./docs/TOOLS.md)
 
-### 8 Tools (somente leitura)
+### 11 Tools (somente leitura)
 
 | Tool | Categoria | Função |
 |---|---|---|
@@ -422,6 +434,9 @@ curl -s -X POST http://localhost:3105/mcp \
 | `sankhya_ajuda_get_article_details` | Domínio | Artigo completo em Markdown (com cap configurável de caracteres) |
 | `sankhya_ajuda_list_categories` | Domínio | Lista as 14 categorias top-level |
 | `sankhya_ajuda_list_sections` | Domínio | Lista 230 seções (com `category_id` e `parent_section_id` opcionais) |
+| `sankhya_ajuda_search_knowledge_unified` | Comunidade + Help | Busca fonte-agnostica sobre help center + comunidade com RRF dedup e rótulos por origem |
+| `sankhya_ajuda_get_community_post` | Comunidade | Fetch uma thread de Q&A da comunidade Bettermode (com respostas) |
+| `sankhya_ajuda_list_community_spaces` | Comunidade | Lista os espaços públicos da comunidade (sem espaços privados) |
 | `sankhya_ajuda_list_mcp_resources` | Bridge | Lista as 6 URIs `sankhya-ajuda://` disponíveis |
 | `sankhya_ajuda_read_resource_by_uri` | Bridge | Lê o conteúdo de uma URI `sankhya-ajuda://` |
 | `sankhya_ajuda_list_prompt_catalog` | Bridge | Lista os 4 prompts com argumentos |
@@ -464,7 +479,7 @@ Sankhya, o que significa o erro E0004 na NF-e?
 **O que acontece:**
 
 1. A LLM chama `sankhya_ajuda_search_articles({query: "E0004 NF-e", mode: "keyword"})`
-2. Recebe top-15 artigos (default) com URLs e scores
+2. Recebe top-15 artigos (default) com URLs e similaridades
 3. Identifica o artigo mais relevante (top-1) e apresenta resposta com causa, solução e link oficial
 
 > 💡 **Default `limit=15`** (max 50). Use `limit=3-5` para busca rápida quando você quer só os artigos mais relevantes (ex: prompt `sankhya_quick_lookup`), e `limit=25-50` para análise comparativa ou exploração ampla. Calibrado para corpus de 6.123 artigos com 64% concentrados em 2 categorias.
@@ -608,6 +623,7 @@ Este MCP **consome apenas o conteúdo público** do help center (`ajuda.sankhya.
 | **Read-only** | Nenhuma tool escreve no banco |
 | **Input validation** | `zod` schemas em todos os parâmetros |
 | **No secrets in logs** | Pino com redaction; tokens nunca aparecem em log |
+| **Erros sem vazamento de internals** | Em `INTERNAL_ERROR` as tools e o `/health` retornam mensagem genérica ao cliente; o detalhe cru (SQL, schema, paths) é logado **apenas** no servidor |
 | **JSON 404 OAuth** | Bloqueia descoberta de OAuth não suportado |
 
 ---
@@ -670,11 +686,18 @@ cd /path/to/sankhya-ajuda-mcp
 docker compose run --rm etl sankhya-sync
 ```
 
-### Cron Diário (default 03:00)
+### Cron Diário
+
+Dois jobs escalonados (compartilham Postgres + vLLM, por isso horários distintos):
 
 ```cron
-0 3 * * * cd /path/to/sankhya-ajuda-mcp && .venv/bin/python -m sync.sync >> /var/log/sankhya_ajuda_sync.log 2>&1
+# Help center @ 03:00
+0 3 * * * cd /path/to/sankhya-ajuda-mcp && .venv/bin/python -m sync.sync --full >> /var/log/sankhya_ajuda_sync.log 2>&1
+# Comunidade (Bettermode) @ 04:00
+0 4 * * * cd /path/to/sankhya-ajuda-mcp && .venv/bin/python -m sync.community_sync --full >> /var/log/sankhya_ajuda_community_sync.log 2>&1
 ```
+
+Templates prontos em `scripts/sankhya_ajuda_sync.cron` e `scripts/sankhya_ajuda_community_sync.cron` (+ logrotate de cada). Instalação em [`docs/DEPLOY.md`](./docs/DEPLOY.md#passo-4--cron-diário).
 
 ### Alertas Recomendados
 

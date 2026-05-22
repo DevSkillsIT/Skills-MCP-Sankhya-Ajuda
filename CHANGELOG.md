@@ -14,6 +14,71 @@ Formato: [Keep a Changelog](https://keepachangelog.com/) · Versionamento: [Sema
 
 ## [Unreleased]
 
+> **Nota de versão (pendente de decisão):** os números de versão estão divergentes entre si
+> e precisam de alinhamento pelo dono do código da Fase 2 — `README.md` indica `1.5.6`,
+> `mcp-server/src/version.ts` (`SERVER_VERSION`) indica `1.0.0` e `mcp-server/package.json`
+> indica `0.2.0`. A adição das 3 tools de comunidade abaixo é uma feature nova e justificaria
+> um bump **minor** (sugestão: `1.6.0`), mas o número final e o alinhamento dos 3 arquivos
+> ficam a cargo de quem mantém o MCP server.
+
+### Security — hardening contra vazamento de internals (2026-05-22)
+
+- **Mensagens de erro não vazam mais internals.** Todas as 11 tools (`INTERNAL_ERROR`) e o
+  endpoint público `/health` (503) deixaram de devolver `err.message` cru ao cliente — que podia
+  expor schema SQL, fragmentos de query, host/porta do banco ou paths. Novo helper
+  `createInternalErrorResponse` em `mcp-server/src/tools/base.ts` loga o detalhe completo
+  **server-side** (pino) e retorna ao cliente uma mensagem genérica de 3 partes; o `/health`
+  passa a retornar `error: "internal error"`. Testes atualizados para validar o **não-vazamento**.
+- **PII em conteúdo da comunidade:** decisão mantida (sem camada de redação) — o conteúdo é
+  público e o uso é interno. Apenas a superfície de erro foi endurecida.
+
+### Community MCP tools — Fase 2 (SPEC-SANKHYA-COMMUNITY-001)
+
+Camada de comunidade exposta na superfície MCP (de 8 para **11 tools**). As tools legadas do
+help center permanecem inalteradas.
+
+- **Nova tool** `sankhya_ajuda_search_knowledge_unified` — busca unificada source-aware sobre
+  help center + comunidade (`source=help|community|all`), com RRF (k=60) por fonte, dedup por
+  título e rótulo de fonte oficial (evita que posts coloquiais "soterrem" os artigos oficiais)
+- **Nova tool** `sankhya_ajuda_get_community_post` — drill-down de um post da comunidade
+  (thread completo: pergunta + respostas + replies aninhadas)
+- **Nova tool** `sankhya_ajuda_list_community_spaces` — lista os 33 espaços públicos da comunidade
+- Documentação atualizada (8→11 tools): `README.md`, `docs/TOOLS.md`, `docs/ARCHITECTURE.md`,
+  `docs/EXAMPLES.md`, `docs/SCHEMA.md` (tabelas `community_*`), `mcp-server/README.md`
+
+### Community sync scheduling (2026-05-22)
+
+Agendamento da ETL da comunidade (Bettermode), espelhando o padrão do help center.
+
+- **Novo** `scripts/sankhya_ajuda_community_sync.cron` — cron diário às **04:00** rodando
+  `python -m sync.community_sync --full` (1h após o help center; escalonado porque os dois
+  pipelines compartilham o mesmo Postgres + endpoint vLLM)
+- **Novo** `scripts/sankhya_ajuda_community_sync.logrotate` — rotação weekly × 4 do log próprio
+  (`/var/log/sankhya_ajuda_community_sync.log`)
+- `docs/OPERATIONS.md` — seção "Comunidade (Bettermode)" (health check de `community_sync_state`,
+  cobertura de posts, sync manual) + cron/logs atualizados para os dois jobs
+- `docs/DEPLOY.md` — Path A (Docker) e Path B (Native/PM2) instalam o cron da comunidade
+- `docs/ARCHITECTURE.md` — subseção "Sync da comunidade (04:00, todo dia)"
+- `README.md` — seção Cron Diário com os dois jobs escalonados
+
+### Community/help-center deployment alignment (2026-05-22)
+
+Auditoria das duas ETLs (help center vs comunidade) e correção de divergências de
+**implantação** — o código/funcionamento já estava alinhado (a comunidade reusa
+`DocumentIndexer` + `_configure_logging`), mas a fiação de deploy só conhecia o help center.
+
+- `docker-compose.yml` — monta `sql/community_schema.sql` no initdb
+  (`02-community-schema.sql`) para que um deploy Docker novo crie as tabelas `community_*`
+  (antes só `schema.sql` era aplicado → `sankhya-community-sync` quebrava em deploy limpo);
+  serviço `etl` ganhou as variáveis `SANKHYA_COMMUNITY_*` espelhando as `SANKHYA_HC_*`
+- `Dockerfile.etl` — label/descrição e comentário do CMD contemplam os dois entry points
+  (`sankhya-sync` + `sankhya-community-sync`)
+- `docs/INSTALL.md` e `docs/DEPLOY.md` — path nativo aplica os dois schemas (`schema.sql` +
+  `community_schema.sql`) e roda as duas ETLs na primeira indexação
+- `scripts/*.cron` — ambos os crons agora usam `flock -n` num lockfile compartilhado
+  (`/var/lock/sankhya_ajuda_etl.lock`): mesmo que o sync das 03:00 ultrapasse 1h, o das 04:00
+  não roda concorrente disputando Postgres+vLLM (pula e se auto-recupera no dia seguinte)
+
 ### Documentation refactor (2026-05-16)
 
 Reescrita completa do conjunto de documentos para preparar publicação Open Source no GitHub

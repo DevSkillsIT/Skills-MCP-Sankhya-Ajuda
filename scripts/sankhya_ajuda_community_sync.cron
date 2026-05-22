@@ -1,0 +1,20 @@
+# /etc/cron.d/sankhya_ajuda_community_sync
+# Daily full sync of the Sankhya Community (Bettermode) at 04:00 server time.
+#
+# Runs one hour after the help-center sync (03:00) on purpose: both pipelines
+# share the same PostgreSQL database and vLLM embedding endpoint, so staggering
+# them avoids GPU/DB contention.
+#
+# flock holds a lock shared with the help-center sync (03:00) so the two ETLs
+# never run concurrently even if the 03:00 job overruns its hour. With `-n`,
+# this job is skipped on that rare day and self-heals on its next daily run
+# (the sync is incremental, so nothing is lost).
+#
+# Adjust the absolute path below to wherever you cloned the repo.
+# Install with:
+#   sudo cp scripts/sankhya_ajuda_community_sync.cron /etc/cron.d/sankhya_ajuda_community_sync
+#   sudo chmod 644 /etc/cron.d/sankhya_ajuda_community_sync
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+0 4 * * * root flock -n /var/lock/sankhya_ajuda_etl.lock bash -c 'cd /path/to/sankhya-ajuda-mcp && .venv/bin/python -m sync.community_sync --full' >> /var/log/sankhya_ajuda_community_sync.log 2>&1

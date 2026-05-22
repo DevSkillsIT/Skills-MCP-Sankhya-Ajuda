@@ -22,7 +22,8 @@ Todos os exemplos são **agnósticos ao cliente MCP** (funcionam em Claude Deskt
 6. [Comparativos entre Artigos](#comparativos-entre-artigos)
 7. [Casos de Reforma Tributária](#casos-de-reforma-tributária)
 8. [Uso Programático (chamadas diretas)](#uso-programático-chamadas-diretas)
-9. [Padrões Anti-Hallucination](#padrões-anti-hallucination)
+9. [Comunidade — Busca e Drill-Down](#comunidade--busca-e-drill-down)
+10. [Padrões Anti-Hallucination](#padrões-anti-hallucination)
 
 ---
 
@@ -202,7 +203,7 @@ Sankhya, quero ver todos os artigos sobre Reforma Tributária. Liste por relevâ
 1. `sankhya_ajuda_list_categories()` para descobrir o `category_id` de "Reforma tributária"
 2. `sankhya_ajuda_search_articles({query: "reforma tributária", category_id: <id>, limit: 20})`
 
-**Resposta:** tabela ordenada por score com os 20 artigos mais relevantes da categoria (42 artigos no total nesta categoria atualmente).
+**Resposta:** tabela ordenada por similaridade com os 20 artigos mais relevantes da categoria (42 artigos no total nesta categoria atualmente).
 
 ---
 
@@ -610,6 +611,110 @@ Use junto com OpenAI Responses API (item 7.3) ou Anthropic Tool Use + MCP gatewa
 
 ---
 
+## Comunidade — Busca e Drill-Down
+
+O MCP agora expõe também a **comunidade Sankhya (Bettermode)** com 7.619 threads de Q&A (perguntas + respostas de usuários) em 33 espaços públicos. Use estas ferramentas para encontrar soluções compartilhadas por pares e troubleshooting comunitário.
+
+### 9.1 Busca unificada (help center + comunidade)
+
+**Prompt:**
+
+```
+Sankhya, como cancelar uma NF-e emitida? Quero respostas do help e de discussões comunitárias.
+```
+
+**O que a LLM faz:**
+
+1. Chama `sankhya_ajuda_search_knowledge_unified({query: "cancelar NF-e", source: "all", limit: 10})`
+2. Recebe resultados de ambas as fontes com rótulo de origem (`fonte: help` ou `fonte: community`)
+3. Integra e destaques respostas e melhores práticas
+
+**Resposta esperada:**
+
+```markdown
+**Cancelamento de NF-e**
+
+Encontrei 10 resultados de ajuda e comunidade:
+
+Fonte **help center** (oficial):
+1. "Como cancelar uma NF-e emitida" — https://ajuda.sankhya.com.br/...
+2. "Procedimento de cancelamento em lote" — https://ajuda.sankhya.com.br/...
+
+Fonte **comunidade** (usuários):
+1. "Dúvida: qual o prazo para cancelar NF-e?" — https://community.sankhya.com.br/...
+2. "Experência: cancelamento rápido usando atalho" — https://community.sankhya.com.br/...
+
+Resumo: ...
+```
+
+---
+
+### 9.2 Ler uma resposta comunitária completa
+
+**Prompt:**
+
+```
+Sankhya, mostra a discussão sobre "como resolver erro de ICMS em NF-e" (post da comunidade).
+```
+
+**O que a LLM faz:**
+
+1. Primeiro chama `sankhya_ajuda_search_knowledge_unified({query: "erro ICMS NF-e", source: "community", limit: 5})` para localizar o post
+2. Chama `sankhya_ajuda_get_community_post({post_id: "<id>", max_body_chars: 15000})` para ler a thread completa (pergunta + todas as respostas)
+
+**Resposta esperada:**
+
+```markdown
+**Tópico: Como resolver erro de ICMS em NF-e?**
+
+Pergunta original (por João Silva):
+...
+
+Respostas (3):
+1. Resposta de Maria (⭐ marcada como solução):
+   ...
+2. Resposta de Pedro:
+   ...
+3. Resposta de Ana:
+   ...
+
+Reações: 12 upvotes
+```
+
+---
+
+### 9.3 Explorar espaços da comunidade
+
+**Prompt:**
+
+```
+Sankhya, que espaços existem na comunidade?
+```
+
+**O que a LLM faz:**
+
+1. Chama `sankhya_ajuda_list_community_spaces()` para listar todos
+
+**Resposta esperada:**
+
+```markdown
+**Espaços da Comunidade Sankhya**
+
+33 espaços públicos disponíveis:
+
+| Espaço | Membros | Posts |
+|---|---|---|
+| Dúvidas | 2.340 | 1.240 |
+| Novas Funcionalidades | 1.890 | 450 |
+| Melhores Práticas | 1.220 | 320 |
+| Sugestões | 980 | 280 |
+| ... (mais 29 espaços) |
+
+Acesse https://community.sankhya.com.br/
+```
+
+---
+
 ## Padrões Anti-Hallucination
 
 A LLM cliente deve **sempre citar a fonte** (URL do artigo) ao responder com base em conteúdo do help center. Padrões recomendados:
@@ -617,8 +722,8 @@ A LLM cliente deve **sempre citar a fonte** (URL do artigo) ao responder com bas
 ### 8.1 System prompt sugerido (para o cliente)
 
 ```
-Você tem acesso ao MCP `sankhya-ajuda` com 8 tools sobre o help center público do ERP Sankhya
-(ajuda.sankhya.com.br). Para qualquer pergunta sobre o Sankhya:
+Você tem acesso ao MCP `sankhya-ajuda` com 11 tools sobre o help center (ajuda.sankhya.com.br)
+e comunidade (community.sankhya.com.br) públicos do ERP Sankhya. Para qualquer pergunta sobre o Sankhya:
 
 1. Use `sankhya_ajuda_search_articles` primeiro. NUNCA invente IDs, telas ou códigos de erro.
 2. Cite a URL pública do artigo em ajuda.sankhya.com.br em toda resposta factual.
@@ -631,7 +736,7 @@ Você tem acesso ao MCP `sankhya-ajuda` com 8 tools sobre o help center público
 
 ### 8.2 Indicador de cobertura
 
-Sempre que a busca retornar score baixo (< 0.2 em hybrid), a LLM deve sinalizar:
+Sempre que a busca retornar similaridade baixa (< 0.2 em hybrid), a LLM deve sinalizar:
 
 > ⚠️ A busca retornou resultados com baixa relevância. Verifique se sua pergunta usa termos do contexto Sankhya
 > ou refine a consulta com nomes de tela / códigos de erro específicos.

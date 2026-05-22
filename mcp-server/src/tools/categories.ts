@@ -7,6 +7,7 @@ import { listCategories } from '../db.js';
 import {
   createSuccessResponse,
   createErrorResponse,
+  createInternalErrorResponse,
   McpResponseTooLargeError,
 } from './base.js';
 import { formatToolResponse } from '../formatters/response-formatter.js';
@@ -46,11 +47,10 @@ export function registerCategoriesTool(server: McpServer, ctx: ToolContext): voi
         if (err instanceof McpResponseTooLargeError) {
           return createErrorResponse(err.message, 'RESPONSE_TOO_LARGE');
         }
-        const msg = err instanceof Error ? err.message : String(err);
-        return createErrorResponse(
+        return createInternalErrorResponse(
+          err,
           `Erro ao listar categorias. Esperado: banco disponivel. ` +
-            `Sugestao: tente novamente. Detalhe: ${msg}`,
-          'INTERNAL_ERROR',
+            `Sugestao: tente novamente.`,
         );
       }
     },

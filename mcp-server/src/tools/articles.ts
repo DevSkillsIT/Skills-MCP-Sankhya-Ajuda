@@ -14,6 +14,7 @@ import { getArticleFull } from '../db.js';
 import {
   createSuccessResponse,
   createErrorResponse,
+  createInternalErrorResponse,
   errorNotFound,
   McpResponseTooLargeError,
 } from './base.js';
@@ -89,11 +90,10 @@ export function registerArticleTool(server: McpServer, ctx: ToolContext): void {
         if (err instanceof McpResponseTooLargeError) {
           return createErrorResponse(err.message, 'RESPONSE_TOO_LARGE');
         }
-        const msg = err instanceof Error ? err.message : String(err);
-        return createErrorResponse(
+        return createInternalErrorResponse(
+          err,
           `Erro ao carregar artigo. Esperado: banco disponivel. ` +
-            `Sugestao: tente novamente. Detalhe: ${msg}`,
-          'INTERNAL_ERROR',
+            `Sugestao: tente novamente.`,
         );
       }
     },

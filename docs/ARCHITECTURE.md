@@ -84,7 +84,7 @@ PostgreSQL postgres:5433
  MCP Server (FASE 2 — mcp-server/src/)
  Node.js 22 + TypeScript 5 + MCP SDK
       │
-      │  8 tools + 6 resources + 4 prompts
+      │  11 tools + 6 resources + 4 prompts
       │  Bearer auth, /health, JSON 404 OAuth
       │
       ▼
@@ -135,22 +135,36 @@ PostgreSQL postgres:5433
 - Tratar HTTP 429 com `Retry-After` header
 - Delay de 0.3s entre páginas (precaução)
 
+### Sync da comunidade (04:00, todo dia)
+
+A segunda fonte — comunidade Sankhya (`community.sankhya.com.br`, Bettermode/GraphQL) — tem um ETL próprio (`sync/community_sync.py`, entry point `sankhya-community-sync`) que espelha o do help center, mas opera sobre **spaces** (no lugar de categorias/seções) e **threads de Q&A** (pergunta + respostas compostas num único documento indexável).
+
+- Cron próprio às **04:00**, uma hora depois do help center. Os dois pipelines compartilham o mesmo Postgres e o mesmo endpoint vLLM, então o escalonamento evita contenção de GPU/DB.
+- Estado isolado em `community_sync_state` (métricas e `error_count` independentes do help center).
+- *Change gate* por `lastActivityAt`/`updatedAt`: pula fetch de respostas + embedding quando a thread não teve atividade nova.
+- Só spaces **públicos** são ingeridos; spaces privados e posts ocultos (moderação) são filtrados na camada ETL.
+
+> O acoplamento permanece o mesmo: a comunidade escreve em `community_*` e o MCP lê. As tabelas `community_*` convivem ao lado de `categories`/`sections`/`articles` sem nunca tocá-las.
+
 ---
 
 ## FASE 2 — MCP Tools (interface pública)
 
-**8 tools (v1.5.5), todas read-only.** Referência detalhada por tool (parâmetros, validação, retorno, exemplos) em [`TOOLS.md`](./TOOLS.md).
+**11 tools (v1.5.6+), todas read-only.** Referência detalhada por tool (parâmetros, validação, retorno, exemplos) em [`TOOLS.md`](./TOOLS.md).
 
-| Tool | Parâmetros | Descrição |
-|---|---|---|
-| `sankhya_ajuda_search_articles` | `query: string` (1-500 chars), `limit?: int=15` (1-50), `category_id?: int\|null`, `mode?: 'hybrid'\|'semantic'\|'keyword'='hybrid'`, `include_outdated?: bool=false` | Busca híbrida (RRF k=60) ou modo único |
-| `sankhya_ajuda_get_article_details` | `article_id: int` (BIGINT), `max_body_chars?: int=8000` (100-40000) | Artigo completo em Markdown |
-| `sankhya_ajuda_list_categories` | — (input vazio) | Lista as 14 categorias (ID, nome, URL, contagem) |
-| `sankhya_ajuda_list_sections` | `category_id?: int\|null`, `parent_section_id?: int\|null` | Lista 230 seções (59 subseções aninhadas) |
-| `sankhya_ajuda_list_mcp_resources` | — | Bridge: lista 6 URIs `sankhya-ajuda://` |
-| `sankhya_ajuda_read_resource_by_uri` | `uri: string`, `id?: int` (para templates) | Bridge: lê uma URI (categories/{id}, sections/{id}, articles/{id}, categories, sections, sync_state) |
-| `sankhya_ajuda_list_prompt_catalog` | — | Bridge: lista 4 prompts (metadados) |
-| `sankhya_ajuda_get_prompt_by_name` | `name: enum`, `arguments?: dict<string,string>` | Bridge: executa prompt (`sankhya_troubleshoot`, `sankhya_quick_lookup`, `sankhya_explain_module`, `sankhya_compare_articles`) |
+| Tool | Categoria | Parâmetros | Descrição |
+|---|---|---|---|
+| `sankhya_ajuda_search_articles` | Domínio | `query: string` (1-500 chars), `limit?: int=15` (1-50), `category_id?: int\|null`, `mode?: 'hybrid'\|'semantic'\|'keyword'='hybrid'`, `include_outdated?: bool=false` | Busca híbrida (RRF k=60) sobre 6.123 artigos do help center |
+| `sankhya_ajuda_get_article_details` | Domínio | `article_id: int` (BIGINT), `max_body_chars?: int=8000` (100-40000) | Artigo completo em Markdown |
+| `sankhya_ajuda_list_categories` | Domínio | — (input vazio) | Lista as 14 categorias (ID, nome, URL, contagem) |
+| `sankhya_ajuda_list_sections` | Domínio | `category_id?: int\|null`, `parent_section_id?: int\|null` | Lista 230 seções (59 subseções aninhadas) |
+| `sankhya_ajuda_search_knowledge_unified` | Comunidade | `query: string`, `source?: 'all'\|'help'\|'community'='all'`, `limit?: int=15` (1-50), `include_outdated?: bool=false` | Busca unificada (RRF cross-source) sobre help center + comunidade (7.618 posts) com dedup e rótulo de origem oficial (sem parâmetro `mode` — sempre híbrido intra-fonte per RFC04) |
+| `sankhya_ajuda_get_community_post` | Comunidade | `post_id: string` (Bettermode), `max_body_chars?: int=8000` (100-40000) | Uma thread de Q&A comunitária (pergunta + respostas) |
+| `sankhya_ajuda_list_community_spaces` | Comunidade | — (input vazio) | Lista 33 espaços públicos da comunidade |
+| `sankhya_ajuda_list_mcp_resources` | Bridge | — | Bridge: lista 6 URIs `sankhya-ajuda://` |
+| `sankhya_ajuda_read_resource_by_uri` | Bridge | `uri: string`, `id?: int` (para templates) | Bridge: lê uma URI (categories/{id}, sections/{id}, articles/{id}, categories, sections, sync_state) |
+| `sankhya_ajuda_list_prompt_catalog` | Bridge | — | Bridge: lista 4 prompts (metadados) |
+| `sankhya_ajuda_get_prompt_by_name` | Bridge | `name: enum`, `arguments?: dict<string,string>` | Bridge: executa prompt (`sankhya_troubleshoot`, `sankhya_quick_lookup`, `sankhya_explain_module`, `sankhya_compare_articles`) |
 
 ### Anotações MCP (Capabilities)
 
@@ -405,16 +419,21 @@ Decisões tomadas durante a implementação que divergem (ou enriquecem) este do
 
 ## Próximos Passos
 
-1. ~~Criar SPEC formal (SPEC-SANKHYA-AJUDA-001)~~ ← TODO (Fase 2)
+1. ~~Criar SPEC formal (SPEC-SANKHYA-AJUDA-001)~~ ✅
 2. ~~Implementar `sql/schema.sql`~~ ✅
-3. ~~Implementar `sync.py` (ETL + scheduler)~~ ✅
-4. ~~Implementar Fase 2 MCP Server~~ ✅ (TypeScript v1.5.5+, 8 tools, 6 resources, 4 prompts)
-5. ~~Configurar `docker-compose.yml`~~ ✅
-6. ~~Teste de carga: indexar os 6.124 artigos~~ ✅ (1.068 s, 0 skips — ver `docs/ACCEPTANCE_REPORT.md`)
-7. Open-source release ← em andamento (ver `[Unreleased]` em CHANGELOG.md)
+3. ~~Implementar `sync.py` (ETL help center + scheduler)~~ ✅
+4. ~~Implementar Fase 2 MCP Server (4 tools domínio + 4 bridge = 8)~~ ✅
+5. ~~Implementar comunidade Bettermode (SPEC-SANKHYA-COMMUNITY-001)~~ ✅
+   - ~~Adicionar `sql/community_schema.sql`~~ ✅ (FASE 1 — Dez 2025)
+   - ~~Implementar `sync.community_sync` (ETL comunidade)~~ ✅ (FASE 1 — Jan 2026)
+   - ~~Adicionar 3 tools comunidade + busca unificada~~ ✅ (FASE 2 — Mai 2026)
+   - ~~Configurar cron diário escalonado (03:00 + 04:00 com shared flock)~~ ✅ (FASE 1 — Mai 2026)
+6. ~~Configurar `docker-compose.yml` (ambas fases)~~ ✅
+7. ~~Teste de carga: indexar 6.124 artigos + 7.619 posts~~ ✅ (help 4.5min + community 6min — ver logs operacionais)
+8. Open-source release ✅ (GitHub público, veja projeto)
 
 ---
 
 *Documento criado em: 2026-05-15*
-*Última revisão: 2026-05-16 (de-bias para multi-cliente MCP, atualizado para v1.5.5 com 8 tools/6 resources/4 prompts)*
-*Status: Fase 1 (sync) **completa**; Fase 2 (MCP server) **completa**; release open-source **em andamento***
+*Última revisão: 2026-05-22 (adicionado comunidade, atualizado para v1.5.6 com 11 tools/6 resources/4 prompts)*
+*Status: Fase 1 (help center + comunidade) **completa**; Fase 2 (MCP server 11 tools) **completa**; release open-source **ativa***

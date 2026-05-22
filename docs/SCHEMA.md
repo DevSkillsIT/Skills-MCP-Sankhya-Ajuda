@@ -188,6 +188,122 @@ Removendo uma categoria, todas as seções e seus artigos são apagados em casca
 
 ---
 
+---
+
+## Schema da Comunidade (Bettermode)
+
+O segundo corpus — **comunidade Sankhya** (`community.sankhya.com.br`, Bettermode/GraphQL) — utiliza tabelas paralelas com o mesmo design de embedding (pgvector + FTS PT-BR) mas com identificadores TEXT (alphanumério do Bettermode, nunca renumerados).
+
+### Tabela `community_spaces`
+
+Equivalente a `categories` para o help center. Bettermode chama de "spaces" — áreas temáticas da comunidade.
+
+| Coluna | Tipo | NOT NULL | Default | Origem | Notas |
+|---|---|---|---|---|---|
+| `id` | TEXT PK | ✓ | — | Bettermode API | ex: "0SZM9HssEOkp" |
+| `name` | TEXT | ✓ | — | `displayName` | ex: "Dúvidas", "Novas Funcionalidades" |
+| `slug` | TEXT | ✓ | `''` | gerado | URL slug (ex: "duvidas") |
+| `url` | TEXT | ✓ | `''` | derivado | URL pública |
+| `members_count` | INT | ✓ | 0 | Bettermode | número de membros |
+| `posts_count` | INT | ✓ | 0 | derivado | threads de Q&A |
+| `private` | BOOLEAN | ✓ | false | `isPrivate` | sempre `false` (privados filtrados) |
+| `synced_at` | TIMESTAMPTZ | ✓ | `now()` | (interno) | última sincronização |
+
+Índices: nenhum (33 linhas, scan trivial).
+
+### Tabela `community_posts`
+
+Threads de Q&A (pergunta + respostas agregadas num único documento para embedding). Equivalente a `articles` mas com estrutura diferente. Conteúdo: 7.618 linhas atualmente (posts públicos da comunidade Bettermode com `status='PUBLISHED'`).
+
+| Coluna | Tipo | NOT NULL | Default | Origem | Notas |
+|---|---|---|---|---|---|
+| `id` | TEXT PK | ✓ | — | Bettermode API | ex: "postID123" |
+| `space_id` | TEXT FK | ✓ | — | Bettermode | → `community_spaces(id)` ON DELETE CASCADE |
+| `title` | TEXT | ✓ | `''` | pergunta original | título do tópico |
+| `url` | TEXT | ✓ | `''` | derivado | URL pública no community |
+| `body_html` | TEXT | ✓ | `''` | Bettermode | HTML bruto (pergunta + respostas) preservado para auditoria |
+| `body_text` | TEXT | ✓ | `''` | derivado | texto limpo (pergunta + respostas compostas) |
+| `body_hash` | CHAR(64) | ✓ | `''` | derivado | SHA256(body_text) — gating de re-embedding |
+| `embedding` | HALFVEC(2560) | | NULL | derivado | Qwen3 ou OpenAI 2560d (mesmo que help center) |
+| `embedding_model` | TEXT | | NULL | (interno) | modelo no momento do embedding |
+| `replies_count` | INT | ✓ | 0 | Bettermode | total de respostas |
+| `reactions_count` | INT | ✓ | 0 | Bettermode | total de reações (upvotes/emojis) |
+| `is_question` | BOOLEAN | ✓ | false | Bettermode | `isQuestion` (true se formato pergunta/resposta) |
+| `has_accepted_answer` | BOOLEAN | ✓ | false | derivado | detecção de resposta marcada como solução |
+| `post_type` | TEXT | | NULL | Bettermode | tipo (ex: "Tópico", "Pergunta") |
+| `tags` | TEXT[] | ✓ | `[]` | Bettermode | tags texto livre |
+| `tag_ids` | TEXT[] | ✓ | `[]` | Bettermode | tag IDs estruturados |
+| `author_name` | TEXT | | NULL | Bettermode | nome do criador |
+| `status` | TEXT | ✓ | `'PUBLISHED'` | Bettermode | `PUBLISHED`, `ARCHIVED`, etc. |
+| `created_at` | TIMESTAMPTZ | | NULL | Bettermode | criação |
+| `updated_at` | TIMESTAMPTZ | | NULL | Bettermode | última edição de conteúdo |
+| `last_activity_at` | TIMESTAMPTZ | | NULL | Bettermode | última atividade (nova resposta, reação) — change gate barato |
+| `synced_at` | TIMESTAMPTZ | ✓ | `now()` | (interno) | última sincronização |
+| `indexed_at` | TIMESTAMPTZ | | NULL | (interno) | quando o vetor foi gerado |
+| `tsv` | TSVECTOR GENERATED | | (sempre presente) | derivado | `setweight(title, 'A') ‖ setweight(body_text, 'B')` com `portuguese_unaccent` |
+
+Índices:
+
+| Índice | Tipo | Uso |
+|---|---|---|
+| `community_posts_pkey` | btree | PK |
+| `idx_community_posts_space_id` | btree | filtro por espaço |
+| `idx_community_posts_body_hash` | btree | sync (check se mudou) |
+| `idx_community_posts_last_activity` | btree DESC | change gate (sincronização incremental) |
+| `idx_community_posts_tsv` | GIN | busca FTS |
+| `idx_community_posts_embedding_hnsw` | HNSW (halfvec_cosine_ops, m=16, ef_construction=64) | busca semântica |
+| `idx_community_posts_tags` | GIN | filtro por tags |
+
+### Tabela `community_sync_state`
+
+Singleton (linha única `id = 1` com CHECK), rastreando o estado independente da sincronização comunitária.
+
+| Coluna | Tipo | NOT NULL | Default | Notas |
+|---|---|---|---|---|
+| `id` | INT PK | ✓ | 1 | CHECK (id = 1) |
+| `last_full_sync_at` | TIMESTAMPTZ | | NULL | `now()` ao terminar |
+| `last_status` | TEXT | ✓ | `'never'` | `never`, `running`, `ok`, `error`, `interrupted` |
+| `last_post_count` | INT | ✓ | 0 | processados |
+| `last_changed_count` | INT | ✓ | 0 | re-embedded ou novos |
+| `last_duration_sec` | INT | ✓ | 0 | duração em segundos |
+| `last_error` | TEXT | | NULL | `repr(exc)` ou NULL em `ok` |
+| `error_count` | INT | ✓ | 0 | contador consecutivo; zera em cada `ok` |
+
+Mantém métricas **independentes** da help center (`sync_state`) para alertamento e monitoramento separado.
+
+### Tabela `community_skipped_posts`
+
+Auditoria de posts que ficaram sem embedding (corpo muito longo após truncamento, etc.). O post continua em `community_posts` com `body_text` completo, então FTS ainda o encontra.
+
+| Coluna | Tipo | NOT NULL | Default | Notas |
+|---|---|---|---|---|
+| `post_id` | TEXT PK | ✓ | — | mesmo ID Bettermode |
+| `title` | TEXT | ✓ | — | truncado em 500 chars no insert |
+| `reason` | TEXT | ✓ | — | hoje só `context_length_exceeded` |
+| `body_len` | INT | ✓ | — | `len(body_text)` no momento do skip |
+| `skipped_at` | TIMESTAMPTZ | ✓ | `now()` | última vez que o skip foi registrado |
+
+ON CONFLICT atualiza (não duplica).
+
+---
+
+## Comparação: Help Center vs Comunidade
+
+| Aspecto | Help Center | Comunidade |
+|---|---|---|
+| **Fonte** | Zendesk Help Center (pública, REST) | Bettermode (pública, GraphQL) |
+| **PK** | BIGINT (Zendesk) | TEXT alphanumeric (Bettermode) |
+| **Hierarquia** | categories → sections → articles | spaces → posts (thread única) |
+| **Conteúdo** | artigos técnicos curados | Q&A threads, respostas de comunidade |
+| **Embedding** | pgvector HALFVEC(2560) — Qwen3 ou OpenAI | pgvector HALFVEC(2560) — **idêntico** |
+| **FTS** | portuguese_unaccent (PT-BR) | portuguese_unaccent (PT-BR) |
+| **Sync** | diário 03:00 | diário 04:00 (1 hora depois) |
+| **Lock** | `/var/lock/sankhya_ajuda_etl.lock` (compartilhado) | `/var/lock/sankhya_ajuda_etl.lock` (compartilhado) |
+| **Tabelas isoladas** | categories, sections, articles, sync_state, skipped_articles | community_spaces, community_posts, community_sync_state, community_skipped_posts |
+| **Acoplamento** | Ambas escrevem no mesmo Postgres; FKs internas não cruzam (help ⊥ community) | — |
+
+---
+
 ## Mapeamento Zendesk ↔ DB (resumo)
 
 | Endpoint Zendesk | Tabela alvo |

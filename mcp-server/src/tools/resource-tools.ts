@@ -18,6 +18,7 @@ import {
 import {
   createSuccessResponse,
   createErrorResponse,
+  createInternalErrorResponse,
   McpResponseTooLargeError,
 } from './base.js';
 import { formatTable } from '../formatters/markdown.js';
@@ -79,11 +80,10 @@ export function registerResourceTools(server: McpServer, ctx: ToolContext): void
         );
         return createSuccessResponse(`${header}\n\n${table}`);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        return createErrorResponse(
+        return createInternalErrorResponse(
+          err,
           `Erro ao listar recursos MCP. Esperado: registry valido. ` +
-            `Sugestao: reporte o problema. Detalhe: ${msg}`,
-          'INTERNAL_ERROR',
+            `Sugestao: reporte o problema.`,
         );
       }
     },
@@ -150,11 +150,10 @@ export function registerResourceTools(server: McpServer, ctx: ToolContext): void
             'INVALID_URI',
           );
         }
-        const msg = err instanceof Error ? err.message : String(err);
-        return createErrorResponse(
+        return createInternalErrorResponse(
+          err,
           `Erro ao ler recurso. Esperado: URI valida e banco disponivel. ` +
-            `Sugestao: tente novamente. Detalhe: ${msg}`,
-          'INTERNAL_ERROR',
+            `Sugestao: tente novamente.`,
         );
       }
     },

@@ -155,8 +155,9 @@ docker compose down
      CREATE EXTENSION IF NOT EXISTS unaccent;
    "
    
-   # Carregue o schema (uma única vez)
-   psql -U sankhya_ajuda -d sankhya_ajuda -f sql/schema.sql
+   # Carregue os schemas (uma única vez). Ambos são idempotentes.
+   psql -U sankhya_ajuda -d sankhya_ajuda -f sql/schema.sql            # help center
+   psql -U sankhya_ajuda -d sankhya_ajuda -f sql/community_schema.sql  # comunidade
    ```
 
 3. Configure Fase 1 (Python ETL)

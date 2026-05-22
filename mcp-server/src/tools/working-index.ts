@@ -12,11 +12,16 @@ import type { EmbeddingClient } from '../embeddings.js';
 import type { Settings } from '../config.js';
 
 import { registerSearchTool } from './search.js';
+import { registerSearchUnifiedTool } from './search-unified.js';
 import { registerArticleTool } from './articles.js';
 import { registerCategoriesTool } from './categories.js';
 import { registerSectionsTool } from './sections.js';
 import { registerResourceTools } from './resource-tools.js';
 import { registerPromptTools } from './prompt-tools.js';
+import {
+  registerGetCommunityPostTool,
+  registerListCommunitySpacesTool,
+} from './community.js';
 
 export interface ToolContext {
   pool: Pool;
@@ -40,7 +45,7 @@ export function registerAllTools(
   server: McpServer,
   ctx: ToolContext,
 ): void {
-  // 4 domain tools
+  // 4 existing domain tools
   registerSearchTool(server, ctx);
   registerArticleTool(server, ctx);
   registerCategoriesTool(server, ctx);
@@ -49,4 +54,11 @@ export function registerAllTools(
   // 4 bridge tools (resources + prompts)
   registerResourceTools(server, ctx);
   registerPromptTools(server, ctx);
+
+  // Fase 1: unified source-aware search (SPEC-SANKHYA-COMMUNITY-001)
+  registerSearchUnifiedTool(server, ctx);
+
+  // Fase 2: community domain drill-down tools (SPEC-SANKHYA-COMMUNITY-001)
+  registerGetCommunityPostTool(server, ctx);
+  registerListCommunitySpacesTool(server, ctx);
 }

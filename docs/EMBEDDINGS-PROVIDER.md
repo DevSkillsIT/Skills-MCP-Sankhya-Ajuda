@@ -69,7 +69,7 @@ Compara com `EMBEDDING_PROVIDER` configurado:
 ```
 **10 resultados** | top-10 mostrados | modo: keyword (index mismatch: provider != modelo do banco)
 
-| ID | Titulo | Breadcrumb | Score | URL |
+| ID | Titulo | Breadcrumb | Similaridade | URL |
 | ... |
 ```
 

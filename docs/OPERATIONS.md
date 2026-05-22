@@ -59,6 +59,49 @@ ORDER BY skipped_at DESC LIMIT 20;
 
 ---
 
+## Comunidade (Bettermode)
+
+A segunda fonte de conteúdo (`community.sankhya.com.br`, Bettermode) tem um sync **independente** do help center: cron próprio às **04:00**, estado próprio em `community_sync_state` e auditoria própria em `community_skipped_posts`. As métricas dos dois pipelines nunca se misturam.
+
+### Health check do sync da comunidade
+
+```bash
+docker exec postgres psql -U sankhya_ajuda -d sankhya_ajuda -c "
+SELECT last_status, last_full_sync_at, last_post_count, last_changed_count,
+       last_duration_sec, error_count, substring(last_error for 80) AS last_error
+FROM community_sync_state;
+"
+```
+
+A coluna `last_status` segue a mesma semântica do help center (`ok`, `running`, `error`, `interrupted`, `never`) e `error_count` zera a cada `ok`. Incidente quando `error_count >= 3`.
+
+### Cobertura de posts
+
+```bash
+docker exec postgres psql -U sankhya_ajuda -d sankhya_ajuda -c "
+SELECT
+  (SELECT count(*) FROM community_posts) AS posts,
+  (SELECT count(*) FROM community_posts WHERE embedding IS NOT NULL) AS with_embedding,
+  (SELECT count(*) FROM community_posts WHERE is_question) AS questions,
+  (SELECT count(*) FROM community_posts WHERE has_accepted_answer) AS answered,
+  (SELECT count(*) FROM community_spaces WHERE NOT private) AS public_spaces,
+  (SELECT count(*) FROM community_skipped_posts) AS skipped_embeddings;
+"
+```
+
+### Sync manual da comunidade
+
+```bash
+cd /path/to/sankhya-ajuda-mcp
+.venv/bin/python -m sync.community_sync --full          # sync completo
+.venv/bin/python -m sync.community_sync --space-id ID   # um único space (smoke test)
+.venv/bin/python -m sync.community_sync --dry-run --limit 50  # sem escrever no banco
+```
+
+> O sync da comunidade tem um *change gate* barato: compara `lastActivityAt`/`updatedAt` de cada post com o valor armazenado e pula o fetch de respostas + embedding quando nada mudou. Na prática, só re-embeda threads com atividade nova.
+
+---
+
 ## Comandos manuais
 
 ### Rodar sync completo agora
@@ -160,20 +203,22 @@ Se o container está parado, subir: `docker start postgres` (compose file deve e
 
 O cliente já trata isso automaticamente — respeita o header `Retry-After`. Aparece no log como `zendesk.rate_limited retry_after=N`. Se for persistente (>30 min seguidos), aumentar `SANKHYA_HC_DELAY` no `.env` (default 0.3s entre páginas).
 
-### Cron não disparou às 03:00
+### Cron não disparou (help center 03:00 / comunidade 04:00)
 
 ```bash
 # Cron está rodando?
 service cron status
 
-# Última execução
-grep CRON /var/log/syslog | grep sankhya_ajuda_sync | tail -5
+# Última execução (troque o filtro pelo job que está investigando)
+grep CRON /var/log/syslog | grep sankhya_ajuda_sync           | tail -5  # help center
+grep CRON /var/log/syslog | grep sankhya_ajuda_community_sync | tail -5  # comunidade
 
-# Conferir entry
-cat /etc/cron.d/sankhya_ajuda_sync
+# Conferir entries
+cat /etc/cron.d/sankhya_ajuda_sync            # help center @ 03:00
+cat /etc/cron.d/sankhya_ajuda_community_sync  # comunidade  @ 04:00
 
-# Log da execução (vazio = não rodou)
-ls -la /var/log/sankhya_ajuda_sync.log
+# Logs de execução (vazio = não rodou)
+ls -la /var/log/sankhya_ajuda_sync.log /var/log/sankhya_ajuda_community_sync.log
 ```
 
 Se o cron rodou mas o log está vazio, o problema é no script (PATH, permissão na venv).
@@ -189,8 +234,11 @@ Para um monitor externo (Prometheus / Grafana / cron com mail):
 | `error_count >= 3` | High | Investigar último_error; pode ser vLLM, Zendesk ou postgres |
 | `last_full_sync_at < now() - 36h` | High | Cron não está rodando |
 | `last_status = 'running' AND last_full_sync_at < now() - 30 min` | Medium | Sync travado |
+| `last_duration_sec > 1800` (30 min) | Medium | Tendência de duração crescente — protege a janela de escalonamento dos crons (ver nota abaixo) |
 | `skipped_articles` cresceu nas últimas 24h | Low | Conteúdo novo do Sankhya com artigos muito longos |
 | `outdated > 50` na base | Low | Sankhya marcou muito conteúdo obsoleto; revisar |
+
+> **Janela de escalonamento dos crons:** o help center roda às 03:00 e a comunidade às 04:00, com um `flock` compartilhado (`/var/lock/sankhya_ajuda_etl.lock`) que impede execução concorrente. Hoje o help center leva ~4-5 min (6.123 artigos). Se `last_duration_sec` em `sync_state` tender a subir (crescimento de corpus ou lentidão do Sankhya) e se aproximar de ~55 min, reavalie o horário da comunidade — o `flock` evita a sobreposição (o perdedor pula e se auto-recupera no dia seguinte, pois o sync é incremental), mas um atraso recorrente atrasaria a indexação da comunidade. Monitore `last_duration_sec` nas duas tabelas (`sync_state` e `community_sync_state`).
 
 Query base de alerta:
 ```sql
@@ -211,17 +259,30 @@ FROM sync_state;
 
 | Arquivo | Conteúdo |
 |---|---|
-| `/var/log/sankhya_ajuda_sync.log` | Output do cron diário |
+| `/var/log/sankhya_ajuda_sync.log` | Output do cron diário do help center (03:00) |
+| `/var/log/sankhya_ajuda_community_sync.log` | Output do cron diário da comunidade (04:00) |
 | `/var/log/sankhya_ajuda_sync_initial.log` | Output do sync inicial manual (criado em 2026-05-15) |
-| `/var/log/syslog` (filtrar `CRON`) | Lifecycle do job pelo cron |
+| `/var/log/syslog` (filtrar `CRON`) | Lifecycle dos jobs pelo cron |
 
-Rotação: weekly, mantém 4 semanas comprimidas (`/etc/logrotate.d/sankhya_ajuda_sync`).
+Rotação: weekly, mantém 4 semanas comprimidas. Cada job tem seu próprio config: `/etc/logrotate.d/sankhya_ajuda_sync` (help center) e `/etc/logrotate.d/sankhya_ajuda_community_sync` (comunidade).
 
 Buscar eventos importantes no log:
 ```bash
 grep -E "sync.done|sync.failed|sync.embed_too_long|sync.embed_failed" \
   /var/log/sankhya_ajuda_sync.log | tail -20
+# Comunidade: troque o nome do evento e do arquivo
+grep -E "community_sync.done|community_sync.failed" \
+  /var/log/sankhya_ajuda_community_sync.log | tail -20
 ```
+
+> **Falsos-positivos ao buscar "erro" no log:** um `grep -i "error\|exception\|erro"` cru
+> retorna muitos resultados que **não são falhas de sync** — são *títulos* de artigos e posts
+> que contêm essas palavras (ex: `"Unmarshalling Error: Not a number"`,
+> `"java.security.cert.CertificateException..."`, `"Erro ao confirmar nota"`), logados em
+> eventos `sync.article`/`community_sync.post` com `mode='skip'`. A saúde real do sync é dada
+> **apenas** pelo evento final (`sync.done`/`community_sync.done` com `status='ok'`) e pela
+> coluna `last_status` + `error_count` em `sync_state`/`community_sync_state`. Não interprete
+> ocorrências da palavra "error" no corpo do log como incidentes.
 
 ---
 
