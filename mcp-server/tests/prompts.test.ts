@@ -40,6 +40,22 @@ describe('handleGetPrompt', () => {
     }
   });
 
+  it('rejects a known prompt when a required argument is missing or blank', () => {
+    for (const [name, args] of [
+      ['sankhya_troubleshoot', {}],
+      ['sankhya_quick_lookup', { term: '   ' }],
+      ['sankhya_explain_module', {}],
+      ['sankhya_compare_articles', {}],
+    ] as const) {
+      const result = handleGetPrompt(name, args);
+      expect('error' in result, `expected error for ${name}`).toBe(true);
+      if ('error' in result) {
+        expect(result.code).toBe('MISSING_ARGUMENT');
+        expect(result.error).toContain('obrigatorio');
+      }
+    }
+  });
+
   it('embeds the troubleshoot problem in the user message', () => {
     const result = handleGetPrompt('sankhya_troubleshoot', { problem: 'erro X' });
     expect('messages' in result).toBe(true);

@@ -9,7 +9,7 @@
 
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { hybridSearch } from '../db.js';
+import { hybridSearch, categoryExists } from '../db.js';
 import { EmbeddingError } from '../embeddings.js';
 import {
   createSuccessResponse,
@@ -89,6 +89,17 @@ export function registerSearchTool(server: McpServer, ctx: ToolContext): void {
               : false,
           mode: (typeof rawArgs.mode === 'string' ? rawArgs.mode : 'hybrid') as SearchMode,
         };
+
+        // R5: invalid category_id must error explicitly, not return 0 results
+        // silently (parity with NOT_FOUND on article/post ids).
+        if (args.category_id !== null && !(await categoryExists(ctx.pool, args.category_id))) {
+          return createErrorResponse(
+            `Categoria ${args.category_id} nao existe no help center Sankhya. ` +
+              `Esperado: um dos category_id validos das 14 categorias. ` +
+              `Sugestao: chame sankhya_ajuda_list_categories para ver os IDs validos.`,
+            'INVALID_CATEGORY',
+          );
+        }
 
         const result = await runSearch(ctx, args);
         if ('isError' in result) {

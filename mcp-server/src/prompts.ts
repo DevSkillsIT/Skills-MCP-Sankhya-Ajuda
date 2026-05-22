@@ -95,15 +95,32 @@ export function handleListPrompts(): PromptDefinition[] {
 export function handleGetPrompt(
   name: string,
   args: Record<string, string>,
-): PromptResult | { error: string } {
+): PromptResult | { error: string; code?: string } {
   if (!VALID_PROMPT_NAMES.includes(name as PromptName)) {
     return {
       error: `Prompt invalido: "${name}". Prompts disponiveis: ${VALID_PROMPT_NAMES.join(', ')}`,
+      code: 'INVALID_PROMPT_NAME',
+    };
+  }
+
+  const def = PROMPT_DEFINITIONS.find((d) => d.name === name);
+
+  // Validate required arguments instead of silently substituting "(nao informado)".
+  const missing = (def?.arguments ?? [])
+    .filter((a) => a.required)
+    .filter((a) => {
+      const v = args[a.name];
+      return v === undefined || v.trim() === '';
+    })
+    .map((a) => a.name);
+  if (missing.length > 0) {
+    return {
+      error: `Argumento(s) obrigatorio(s) ausente(s) para "${name}": ${missing.join(', ')}.`,
+      code: 'MISSING_ARGUMENT',
     };
   }
 
   const messages = generatePromptMessages(name as PromptName, args);
-  const def = PROMPT_DEFINITIONS.find((d) => d.name === name);
   return {
     description: def?.description ?? name,
     messages,

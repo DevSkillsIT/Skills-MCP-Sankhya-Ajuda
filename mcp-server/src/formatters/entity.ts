@@ -48,8 +48,12 @@ export function formatSearchResults(input: SearchResultsInput): string {
     };
   });
 
+  const legend =
+    '_Ordenado por relevancia: linha 1 = melhor match. A coluna Score so e ' +
+    'comparavel DENTRO do mesmo modo (hybrid/RRF usa escala diferente de ' +
+    'semantic e keyword); use a ordem das linhas, nao o valor absoluto._';
   const table = formatTable(['ID', 'Titulo', 'Breadcrumb', 'Score', 'URL'], rows);
-  return `${summary}\n\n${table}`;
+  return `${summary}\n${legend}\n\n${table}`;
 }
 
 function modeLabelFor(mode: SearchModeReported): string {
@@ -133,7 +137,7 @@ export function formatSectionList(rows: SectionRow[]): string {
   if (rows.length === 0) {
     return formatEmpty();
   }
-  const summary = `**${rows.length} secao${rows.length === 1 ? '' : 'es'}** encontrada${rows.length === 1 ? '' : 's'} no help center Sankhya`;
+  const summary = `**${rows.length} ${rows.length === 1 ? 'secao' : 'secoes'}** encontrada${rows.length === 1 ? '' : 's'} no help center Sankhya`;
   const data = rows.map((r) => ({
     ID: r.id,
     Nome: r.name,

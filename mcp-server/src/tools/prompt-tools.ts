@@ -107,11 +107,14 @@ export function registerPromptTools(server: McpServer, _ctx: ToolContext): void 
         const result = handleGetPrompt(name, promptArgs);
 
         if ('error' in result) {
-          return createErrorResponse(
-            `${result.error} Esperado: nome listado em sankhya_ajuda_list_prompt_catalog. ` +
-              `Sugestao: chame sankhya_ajuda_list_prompt_catalog para ver os prompts disponiveis.`,
-            'INVALID_PROMPT_NAME',
-          );
+          const code = result.code ?? 'INVALID_PROMPT_NAME';
+          const suffix =
+            code === 'MISSING_ARGUMENT'
+              ? ` Esperado: todos os argumentos obrigatorios (*) preenchidos. ` +
+                `Sugestao: consulte sankhya_ajuda_list_prompt_catalog para ver os argumentos exigidos.`
+              : ` Esperado: nome listado em sankhya_ajuda_list_prompt_catalog. ` +
+                `Sugestao: chame sankhya_ajuda_list_prompt_catalog para ver os prompts disponiveis.`;
+          return createErrorResponse(`${result.error}${suffix}`, code);
         }
 
         let md = `**Prompt: ${name}**\n\n`;

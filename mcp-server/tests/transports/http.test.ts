@@ -10,6 +10,7 @@ import { buildTestSettings } from '../../src/config.js';
 import type { Pool } from '../../src/db.js';
 import type { EmbeddingClient } from '../../src/embeddings.js';
 import * as dbModule from '../../src/db.js';
+import { SERVER_VERSION } from '../../src/version.js';
 
 const fakePool = {
   end: vi.fn().mockResolvedValue(undefined),
@@ -52,7 +53,7 @@ describe('GET /health (AC01 / QG01) — public, no auth', () => {
     expect(res.headers['content-type']).toMatch(/^application\/json/);
     expect(res.body).toMatchObject({
       status: 'ok',
-      version: '1.0.0',
+      version: SERVER_VERSION,
       tenant: 'skillsit-test',
       last_sync_status: 'ok',
       error_count: 0,

@@ -19,6 +19,7 @@ const HIT: SearchHit = {
   html_url: 'https://ajuda.sankhya.com.br/hc/pt-br/articles/12345',
   outdated: false,
   score: 0.871,
+  similarity: 0.871,
 };
 
 describe('formatSearchResults', () => {
@@ -35,6 +36,18 @@ describe('formatSearchResults', () => {
     expect(md).toContain('| ID | Titulo | Breadcrumb | Score | URL |');
     expect(md).toContain('12345');
     expect(md).toContain('0.871');
+  });
+
+  it('adds a relevance legend warning that Score is mode-relative (R10)', () => {
+    const md = formatSearchResults({
+      hits: [HIT],
+      query: 'nf-e',
+      limit: 5,
+      includeOutdated: false,
+      modeUsed: 'hybrid',
+    });
+    expect(md).toContain('linha 1 = melhor match');
+    expect(md.toLowerCase()).toContain('mesmo modo');
   });
 
   it('shows keyword_fallback metadata line when vLLM is down', () => {
@@ -167,5 +180,17 @@ describe('formatCategoryList / formatSectionList', () => {
     const md = formatSectionList([sec]);
     expect(md).toContain('| ID | Nome | Categoria | Parent | Artigos |');
     expect(md).toContain('| 10 | NF-e |');
+  });
+
+  it('pluralizes "secoes" correctly (not "secaoes") for multiple sections', () => {
+    const sec2: SectionRow = { ...sec, id: 11, name: 'NFC-e' };
+    const md = formatSectionList([sec, sec2]);
+    expect(md).toContain('**2 secoes** encontradas');
+    expect(md).not.toContain('secaoes');
+  });
+
+  it('uses singular "secao" for a single section', () => {
+    const md = formatSectionList([sec]);
+    expect(md).toContain('**1 secao** encontrada');
   });
 });

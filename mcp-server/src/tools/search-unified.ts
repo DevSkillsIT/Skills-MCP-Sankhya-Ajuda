@@ -144,6 +144,15 @@ function formatUnifiedMarkdown(hits: UnifiedHit[]): string {
   const headers = ['Fonte', 'Oficial', 'ID', 'Título', 'Contexto', 'Similaridade', 'URL'];
   const lines: string[] = [];
 
+  // R10: rows are already in RRF rank order (best match first). The Similaridade
+  // column is the raw cosine per item and is NON-monotonic with row order, so a
+  // weak model must rank by ROW ORDER, not by this value.
+  lines.push(
+    '_Ordenado por relevância (linha 1 = melhor match). A coluna Similaridade é ' +
+      'o cosseno cru de cada item e NÃO acompanha a ordem das linhas; use a ordem, ' +
+      'não o valor._',
+  );
+  lines.push('');
   lines.push('| ' + headers.join(' | ') + ' |');
   lines.push('|' + headers.map(() => '---|').join(''));
 

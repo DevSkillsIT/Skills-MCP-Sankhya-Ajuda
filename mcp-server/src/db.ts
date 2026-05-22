@@ -367,6 +367,20 @@ export async function listCategories(pool: Pool): Promise<CategoryRow[]> {
   }));
 }
 
+// ─── categoryExists ──────────────────────────────────────────────────────────
+
+/**
+ * Cheap existence check for a category id, used by search tools to distinguish
+ * "invalid category_id" from "valid category with zero matches" (R5 error parity).
+ */
+export async function categoryExists(pool: Pool, id: number): Promise<boolean> {
+  const result = await pool.query<{ exists: boolean }>(
+    'SELECT EXISTS(SELECT 1 FROM categories WHERE id = $1) AS exists',
+    [id],
+  );
+  return result.rows[0]?.exists === true;
+}
+
 // ─── listSections ────────────────────────────────────────────────────────────
 
 export async function listSections(
