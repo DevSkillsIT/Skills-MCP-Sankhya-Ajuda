@@ -137,18 +137,19 @@ O RRF com k=60 garante que os artigos oficiais apareçam consistentemente no top
 | `community` | só `hybridSearchCommunity` | intra-fonte (por posição) | `dedupCommunityByTitle` |
 | `all` | ambas, `Math.max(20, limit)` cada | `crossSourceRRF` e fatia para `limit` | `dedupCommunityByTitle` antes do RRF |
 
-**Retorna:** tabela Markdown com colunas (ordem exata por RF01.8):
+**Retorna:** tabela Markdown com colunas (ordem exata por RF01.8 + R11):
 
 ```
-| Fonte | Oficial | ID | Título | Contexto | Similaridade | URL |
+| # | Fonte | Oficial | ID | Título | Contexto | Similaridade | URL |
 ```
 
+- `#`: rank autoritativo 1-indexado (R11). Ordenação monotônica do RRF — use esta coluna para ordenar, **não** a `Similaridade`.
 - `Fonte`: `HELP` ou `COMUNIDADE`
 - `Oficial`: `Sim` (help) ou `Não` (comunidade)
 - `ID`: ID do artigo (help, BIGINT como string) ou ID do post (comunidade, string alfanumérica)
 - `Título`: título do artigo ou post
 - `Contexto`: breadcrumb (help) ou nome do espaço (comunidade); `—` se ausente
-- `Similaridade`: similaridade de cosseno 0.000–1.000 (3 casas decimais) ou `—` em modo keyword
+- `Similaridade`: similaridade de cosseno 0.000–1.000 (3 casas decimais) ou `—` em modo keyword. **Não-monotônica** com a ordem das linhas (é o cosseno cru por item, não o score de ranking).
 
 **Degradação:** igual à `sankhya_ajuda_search_articles` — quando `EMBEDDING_PROVIDER=none` ou
 há mismatch de índice, os dois corpora caem para busca keyword-only. O `distThreshold`
@@ -166,10 +167,10 @@ relevância, apenas no CTE semântico.
 
 **Trecho de resposta de exemplo:**
 ```
-| Fonte | Oficial | ID | Título | Contexto | Similaridade | URL |
-|---|---|---|---|---|---|---|
-| HELP | Sim | 12345 | Nota Fiscal não confirmada — causa e solução | NF-e > Emissão | 0.739 | https://ajuda.sankhya.com.br/... |
-| COMUNIDADE | Não | ABC123XYZ | Erro ao confirmar NF-e no Sankhya | Fiscal | 0.712 | https://community.sankhya.com.br/... |
+| # | Fonte | Oficial | ID | Título | Contexto | Similaridade | URL |
+|---|---|---|---|---|---|---|---|
+| 1 | HELP | Sim | 12345 | Nota Fiscal não confirmada — causa e solução | NF-e > Emissão | 0.739 | https://ajuda.sankhya.com.br/... |
+| 2 | COMUNIDADE | Não | ABC123XYZ | Erro ao confirmar NF-e no Sankhya | Fiscal | 0.712 | https://community.sankhya.com.br/... |
 ```
 
 ---

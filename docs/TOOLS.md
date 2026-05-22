@@ -65,7 +65,7 @@
   - Dedup de posts por título normalizado (remove ~801 reposts 10,5%)
   - Label de origem: `Fonte` (HELP/COMUNIDADE) + `Oficial` (Sim/Não)
   - Sem parâmetro `mode` (RFC04 — sempre híbrido intra-fonte)
-  - Colunas: `Fonte | Oficial | ID | Título | Contexto | Similaridade | URL`
+  - Colunas: `# | Fonte | Oficial | ID | Título | Contexto | Similaridade | URL` (coluna `#` = rank autoritativo, R11; `Similaridade` é cosseno cru não-monotônico)
 
 - **Recall Scaling** (CHANGE 1)
   - `source=all` agora usa `internalFetchLimit = Math.max(20, limit)` por fonte
