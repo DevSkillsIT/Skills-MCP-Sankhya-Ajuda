@@ -26,7 +26,7 @@ export const SERVER_INSTRUCTIONS = `MCP do Help Center publico do Sankhya ERP (a
 Mais de 6.000 artigos indexados em pt-BR. Somente leitura.
 
 REGRAS CRITICAS:
-1. ECONOMIA: 1 call de search_articles ja retorna top-N com breadcrumb. Nao
+1. ECONOMIA: 1 call de search_knowledge_unified ja retorna top-N com breadcrumb. Nao
    chame get_article_details em loop.
 2. LIMIT default 15 (max 50). Use 5 para resposta rapida, 25-50 para analise
    comparativa ou exploracao de tema novo. Corpus tem mais de 6.000 artigos, 64%
@@ -45,7 +45,7 @@ REGRAS CRITICAS:
     compare_articles). list_prompt_catalog para detalhes.
 
 TOOLS:
-- sankhya_ajuda_search_articles(query, limit?=15, category_id?, include_outdated?, mode?)
+- sankhya_ajuda_search_knowledge_unified(query, limit?=15, include_outdated?, source?=all)
 - sankhya_ajuda_get_article_details(article_id, max_body_chars?=8000)
 - sankhya_ajuda_list_categories()
 - sankhya_ajuda_list_sections(category_id?, parent_section_id?)

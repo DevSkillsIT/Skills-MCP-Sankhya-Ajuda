@@ -76,7 +76,7 @@ export function registerArticleTool(server: McpServer, ctx: ToolContext): void {
           return errorNotFound(
             'Artigo',
             articleId,
-            'use sankhya_ajuda_search_articles para descobrir IDs validos',
+            'use sankhya_ajuda_search_knowledge_unified para descobrir IDs validos',
           );
         }
 

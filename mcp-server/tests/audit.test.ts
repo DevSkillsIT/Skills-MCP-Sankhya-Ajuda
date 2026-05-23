@@ -59,10 +59,10 @@ function buildMockCtx(): ToolContext {
   };
 }
 
-// ─── The 8 existing tool names that must never change (AC08 regression guard) ─
+// ─── The 7 existing tool names that must never change (AC08 regression guard) ─
+// NOTE: search_articles foi desativada (redundante com search_knowledge_unified).
 
 const EXISTING_TOOL_NAMES = [
-  'sankhya_ajuda_search_articles',
   'sankhya_ajuda_get_article_details',
   'sankhya_ajuda_list_categories',
   'sankhya_ajuda_list_sections',
@@ -87,14 +87,14 @@ const { server, getTools } = buildCapturingServer();
 registerAllTools(server, buildMockCtx());
 const registeredTools = getTools();
 
-// ─── AC08: Exactly 11 tools ───────────────────────────────────────────────────
+// ─── AC08: Exactly 10 tools ───────────────────────────────────────────────────
 
 describe('AC08 — tool count and names', () => {
-  it('registers exactly 11 tools', () => {
-    expect(registeredTools).toHaveLength(11);
+  it('registers exactly 10 tools', () => {
+    expect(registeredTools).toHaveLength(10);
   });
 
-  it('all 8 existing tool names are present and unchanged', () => {
+  it('all 7 existing tool names are present and unchanged', () => {
     const registeredNames = new Set(registeredTools.map((t) => t.name));
     for (const name of EXISTING_TOOL_NAMES) {
       expect(registeredNames, `Missing existing tool: ${name}`).toContain(name);
@@ -227,6 +227,6 @@ describe('Audit summary — diagnostic snapshot', () => {
     console.warn('========================\n');
 
     // Guarantee this test always passes — it is informational only.
-    expect(rows).toHaveLength(11);
+    expect(rows).toHaveLength(10);
   });
 });

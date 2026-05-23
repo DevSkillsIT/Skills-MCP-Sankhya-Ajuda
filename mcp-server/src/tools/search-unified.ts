@@ -39,11 +39,12 @@ const TOOL_NAME = 'sankhya_ajuda_search_knowledge_unified';
 // Description: 280-400 chars, "Sankhya" ≥2x, key noun FIRST, routing hint included.
 // Verified length: 396 chars, 2× "Sankhya".
 const TOOL_DESCRIPTION =
-  'Base de conhecimento do Sankhya unificada — busca artigos da Central de Ajuda e posts da ' +
-  'comunidade (fórum) do Sankhya numa consulta, com ranking RRF que mistura as fontes e ' +
-  'rotula cada item (oficial vs comunidade). Use para dúvidas, erros, mensagens de erro, how-to ' +
-  'e discussões. Para documentação oficial com filtro de categoria/modo, use ' +
-  'sankhya_ajuda_search_articles. Retorna tabela Markdown.';
+  'Base de conhecimento do Sankhya — busca unificada (Central de Ajuda + ' +
+  'forum/comunidade) com ranking RRF que mistura fontes e rotula cada item ' +
+  '(HELP/COMUNIDADE, Oficial Sim/Nao). Tool padrao para qualquer duvida sobre ' +
+  'o Sankhya: erros SEFAZ, how-to, configuracao, troubleshooting, discussoes. ' +
+  'source=help, community ou all (default). Retorna tabela Markdown com ' +
+  'coluna # de rank autoritativo.';
 
 // RRF constant — matches intra-source k used by hybridSearch and hybridSearchCommunity.
 const RRF_K = 60;

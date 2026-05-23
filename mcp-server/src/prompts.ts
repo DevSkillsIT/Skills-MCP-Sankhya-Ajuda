@@ -139,11 +139,11 @@ function generatePromptMessages(
       return [
         systemMessage(
           'Voce e um suporte tecnico N2 do ERP Sankhya. Investigue o problema do usuario seguindo este protocolo:\n\n' +
-            'PASSO 1 (obrigatorio): sankhya_ajuda_search_articles({query: "<sintoma exato>", mode: "hybrid", limit: 7})\n' +
+            'PASSO 1 (obrigatorio): sankhya_ajuda_search_knowledge_unified({query: "<sintoma exato>", source: "all", limit: 7})\n' +
             'PASSO 2 (condicional): sankhya_ajuda_get_article_details({article_id: <melhor match>}) para detalhe.\n' +
             'PASSO 3 (condicional): sankhya_ajuda_list_categories() se precisar filtrar por dominio.\n\n' +
             'Apresente: causa provavel, solucao passo-a-passo, artigos referenciados (com URL), proximos passos se nao resolver.\n\n' +
-            'MAXIMO: 3 tool calls. Use mode=keyword se o usuario forneceu codigo de erro especifico.',
+            'MAXIMO: 3 tool calls. A busca unificada cobre help oficial + comunidade (source: "all").',
         ),
         userMessage(`Problema reportado no Sankhya: ${problem}`),
       ];
@@ -154,7 +154,7 @@ function generatePromptMessages(
       return [
         systemMessage(
           'Voce e um atendente de suporte do Sankhya. Resposta direta e curta:\n\n' +
-            '1 TOOL CALL: sankhya_ajuda_search_articles({query: "<termo>", limit: 3})\n\n' +
+            '1 TOOL CALL: sankhya_ajuda_search_knowledge_unified({query: "<termo>", source: "all", limit: 3})\n\n' +
             'Apresente: top-1 artigo (titulo + breadcrumb + URL + 1 paragrafo de resumo se necessario).\n' +
             'Se o usuario quiser mais detalhes, ofereca o article_id.',
         ),
@@ -167,7 +167,7 @@ function generatePromptMessages(
       return [
         systemMessage(
           'Voce e um consultor Sankhya. Explique o modulo solicitado citando docs oficiais.\n\n' +
-            `PASSO 1: sankhya_ajuda_search_articles({query: "${module} Sankhya conceito", limit: 10, mode: "semantic"})\n` +
+            `PASSO 1: sankhya_ajuda_search_knowledge_unified({query: "${module} Sankhya conceito", source: "all", limit: 10})\n` +
             'PASSO 2 (opcional): sankhya_ajuda_get_article_details no artigo mais relevante.\n\n' +
             'Estrutura: O que e -> Quando usar -> Pre-requisitos -> Telas principais -> Erros comuns.\n' +
             'Cite URLs do help Sankhya em cada secao.',

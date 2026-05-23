@@ -1,6 +1,6 @@
 {
   "name": "@skillsit/sankhya-ajuda-mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "MCP Server for Sankhya ERP help center + community (Bettermode) — unified hybrid search (RRF cross-source) over 6,123 articles + 7,618 community posts. Streamable HTTP + Bearer auth. Read-only. Built by Skills IT.",
   "type": "module",
   "main": "./dist/index.js",

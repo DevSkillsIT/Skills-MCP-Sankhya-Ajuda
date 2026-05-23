@@ -68,7 +68,7 @@ async function initialize(app: ReturnType<typeof buildHttpApp>['app']): Promise<
     result: { serverInfo: { name: string }; instructions: string };
   };
   expect(body.result.serverInfo.name).toBe('@skillsit/sankhya-ajuda-mcp');
-  expect(body.result.instructions).toContain('sankhya_ajuda_search_articles');
+  expect(body.result.instructions).toContain('sankhya_ajuda_search_knowledge_unified');
 
   const sessionId = res.headers['mcp-session-id'];
   expect(typeof sessionId).toBe('string');
@@ -105,8 +105,10 @@ describe('MCP protocol over Streamable HTTP', () => {
         html_url: 'https://ajuda.sankhya.com.br/hc/articles/1001',
         outdated: false,
         score: 0.875,
+        similarity: 0.875,
       },
     ]);
+    vi.spyOn(dbModule, 'hybridSearchCommunity').mockResolvedValue([]);
     vi.spyOn(dbModule, 'listCategories').mockResolvedValue([
       {
         id: 1,
@@ -168,9 +170,10 @@ describe('MCP protocol over Streamable HTTP', () => {
     });
     const toolsBody = tools.body as { result: { tools: Array<{ name: string }> } };
     expect(tools.res.status).toBe(200);
-    // Phase 1 adds sankhya_ajuda_search_knowledge_unified → 9 tools.
-    // Phase 2 adds get_community_post + list_community_spaces → 11 tools total.
-    expect(toolsBody.result.tools).toHaveLength(11);
+    // Phase 1 adds sankhya_ajuda_search_knowledge_unified.
+    // Phase 2 adds get_community_post + list_community_spaces.
+    // search_articles desativada → 10 tools total.
+    expect(toolsBody.result.tools).toHaveLength(10);
     expect(toolsBody.result.tools.map((t) => t.name)).toContain(
       'sankhya_ajuda_read_resource_by_uri',
     );
@@ -229,7 +232,7 @@ describe('MCP protocol over Streamable HTTP', () => {
     };
     expect(prompt.res.status).toBe(200);
     expect(promptBody.result.messages[0]?.content.text).toContain(
-      'sankhya_ajuda_search_articles',
+      'sankhya_ajuda_search_knowledge_unified',
     );
 
     const search = await postRpc({
@@ -237,8 +240,8 @@ describe('MCP protocol over Streamable HTTP', () => {
       id: 8,
       method: 'tools/call',
       params: {
-        name: 'sankhya_ajuda_search_articles',
-        arguments: { query: 'NF-e', mode: 'keyword', limit: 1 },
+        name: 'sankhya_ajuda_search_knowledge_unified',
+        arguments: { query: 'NF-e', source: 'all', limit: 1 },
       },
     });
     const searchBody = search.body as {

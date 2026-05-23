@@ -11,7 +11,9 @@ import type { Pool } from 'pg';
 import type { EmbeddingClient } from '../embeddings.js';
 import type { Settings } from '../config.js';
 
-import { registerSearchTool } from './search.js';
+// DISABLED: search_articles is redundant with search_knowledge_unified (source-aware,
+// returns article_id + post_id). Kept commented to restore category_id/mode filters later.
+// import { registerSearchTool } from './search.js';
 import { registerSearchUnifiedTool } from './search-unified.js';
 import { registerArticleTool } from './articles.js';
 import { registerCategoriesTool } from './categories.js';
@@ -46,7 +48,9 @@ export function registerAllTools(
   ctx: ToolContext,
 ): void {
   // 4 existing domain tools
-  registerSearchTool(server, ctx);
+  // DISABLED: redundant with registerSearchUnifiedTool below. Re-enable this line
+  // and its import to bring search_articles (category_id/mode filters) back.
+  // registerSearchTool(server, ctx);
   registerArticleTool(server, ctx);
   registerCategoriesTool(server, ctx);
   registerSectionsTool(server, ctx);

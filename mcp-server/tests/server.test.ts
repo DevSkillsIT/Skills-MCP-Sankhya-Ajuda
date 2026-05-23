@@ -16,7 +16,7 @@ describe('SERVER_INSTRUCTIONS', () => {
     expect(typeof SERVER_INSTRUCTIONS).toBe('string');
     expect(SERVER_INSTRUCTIONS.length).toBeLessThanOrEqual(2000);
     // Contains the canonical tool names so clients can self-discover.
-    expect(SERVER_INSTRUCTIONS).toContain('sankhya_ajuda_search_articles');
+    expect(SERVER_INSTRUCTIONS).toContain('sankhya_ajuda_search_knowledge_unified');
     expect(SERVER_INSTRUCTIONS).toContain('sankhya_ajuda_get_article_details');
     expect(SERVER_INSTRUCTIONS).toContain('sankhya_ajuda_list_categories');
     expect(SERVER_INSTRUCTIONS).toContain('sankhya_ajuda_list_sections');
