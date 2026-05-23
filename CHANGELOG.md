@@ -229,6 +229,73 @@ qualquer cliente compatível com MCP 2025-11-25 Streamable HTTP.
 
 ---
 
+## [1.2.0] — 2026-05-23 — Unified-only search
+
+Consolidação da superfície de busca atrás de uma única tool canônica
+(`sankhya_ajuda_search_knowledge_unified`), eliminando a ambiguidade de
+escolha de ferramenta para LLMs externos de menor capacidade, que
+sistematicamente selecionavam `search_articles` primeiro mesmo para
+queries de troubleshooting onde a comunidade tem a resposta.
+
+### Removed (BREAKING — consumer-side)
+
+- **`sankhya_ajuda_search_articles` deixou de ser registrada** como tool MCP.
+  A fonte (`src/tools/search.ts`) e a função `registerSearchTool` permanecem
+  no repositório; basta descomentar 2 linhas em `working-index.ts` para
+  reativar. Consumidores que chamavam essa tool devem migrar para
+  `sankhya_ajuda_search_knowledge_unified({source: 'all'})`.
+- **Filtro `category_id` e parâmetro `mode` foram deliberadamente NÃO
+  portados** para o `unified`. Decisão intencional, não esquecimento:
+  - Para 90%+ das queries reais, RRF híbrido + ranking cross-source supera
+    o filtro manual por categoria.
+  - O `mode` (hybrid/semantic/keyword) é hoje uma decisão de runtime do
+    backend (degradação automática em mismatch de provider), não de quem
+    chama; expor isso só confundia LLMs fracos.
+  - Para descoberta de categorias específicas, `sankhya_ajuda_list_categories`
+    + `sankhya_ajuda_list_sections` continuam disponíveis.
+  - Se o filtro voltar a ser necessário, o caminho é reativar a `search_articles`
+    como tool especializada (não re-introduzir os params no unified).
+- Total de tools registradas: **11 → 10**. Audit (`AC08`) atualizado.
+
+### Changed
+
+- **`search_knowledge_unified.description` reescrita** para se tornar
+  autônoma: removida a cross-ref morta `"Para documentação oficial com
+  filtro de categoria/modo, use sankhya_ajuda_search_articles"` (tool
+  inexistente após este release); lead com `"Tool padrão para qualquer
+  dúvida sobre o Sankhya"` para reforçar canonicidade.
+- **Prompts migrados para `unified`**: `sankhya_troubleshoot`,
+  `sankhya_quick_lookup` e `sankhya_explain_module` agora orientam o LLM a
+  chamar `search_knowledge_unified({source: 'all'})` em vez de
+  `search_articles({mode: '...'})`. Evita que prompts guiados apontem para
+  tool fantasma.
+- **`SERVER_INSTRUCTIONS` reduzidas** — bloco TOOLS lista apenas a busca
+  canônica; regra de ECONOMIA nomeia `search_knowledge_unified`. Reduz a
+  carga de tokens iniciais e enviesa positivamente a seleção de tool.
+- Versão bumpada: `package.json` e `src/version.ts` → **1.2.0**
+  (`package-lock.json` continua com drift pré-existente em `1.0.0`;
+  follow-up de `npm install` pendente).
+
+### Added (continuação de 1.1.0)
+
+- **Coluna `#` (rank autoritativo)** na tabela do `unified` (cf. commits
+  `64e672b` e `77ae817` em `[Unreleased]` antes desta consolidação). Resolve
+  a não-monotonicidade da coluna `Similaridade` (cosseno cru) para LLMs
+  fracos que tentavam reordenar pelo valor.
+- Cross-reference do `search_articles` (antes da desativação) para o
+  `unified`, retido no source para o caso de reativação futura.
+
+### Validation
+
+- Build `tsc` limpo · **318/318 testes unitários** (audit recalibrado para 10 tools).
+- Validação ao vivo após `pm2 restart`: `unified` retorna a tabela com `#`;
+  `search_articles` retorna `Tool not found` (confirmando remoção firme).
+- Testes posicionais em `tests/e2e/mcp-server.e2e.test.ts` ajustados para
+  o deslocamento de colunas (`cols[3]→[4]` para ID, `cols[6]→[7]` para
+  Similaridade) — ver `64e672b`.
+
+---
+
 ## [1.1.0] — 2026-05-15 — Multi-IA Consolidation V1
 
 ### Changed — Fase 2 SPEC

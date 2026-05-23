@@ -12,6 +12,28 @@ Todos os exemplos são **agnósticos ao cliente MCP** (funcionam em Claude Deskt
 
 ---
 
+> ⚠️ **Aviso de migração — v1.2.0 (2026-05-23)**
+>
+> Os exemplos abaixo foram escritos antes da migração unified-only e usam `sankhya_ajuda_search_articles({query, mode, category_id, ...})`, que **não existe mais** como tool registrada. Para usá-los hoje, traduza assim:
+>
+> ```
+> ANTES (pré-1.2.0):
+>   sankhya_ajuda_search_articles({query: "X", mode: "keyword", limit: 5, category_id: 123})
+>
+> AGORA (v1.2.0+):
+>   sankhya_ajuda_search_knowledge_unified({query: "X", source: "all", limit: 5})
+> ```
+>
+> Regras de tradução:
+> - `mode: "..."` → **remova** (a estratégia de busca é decidida pelo runtime; o `unified` é sempre híbrido intra-fonte com degradação automática).
+> - `category_id: <id>` → **remova** e incorpore o nome da categoria no `query` (ex.: `query: "reforma tributária ..."`). Para descobrir categorias, use `sankhya_ajuda_list_categories`.
+> - `source: "help" | "community" | "all"` é o único filtro novo: `"help"` reproduz o comportamento da `search_articles`, `"all"` (default) cobre help + comunidade, `"community"` só fórum.
+> - A tabela de resposta ganhou a coluna `#` (rank autoritativo) — em scripts, ordene por essa coluna, não pela `Similaridade`.
+>
+> O rewrite integral dos exemplos abaixo está planejado para um turno futuro de documentação. Veja [`CHANGELOG`](../CHANGELOG.md#120--2026-05-23--unified-only-search) para o detalhe da migração.
+
+---
+
 ## Índice
 
 1. [Convenção de prompts](#convenção-de-prompts)

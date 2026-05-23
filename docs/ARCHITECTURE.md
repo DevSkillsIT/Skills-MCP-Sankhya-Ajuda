@@ -154,7 +154,7 @@ A segunda fonte — comunidade Sankhya (`community.sankhya.com.br`, Bettermode/G
 
 | Tool | Categoria | Parâmetros | Descrição |
 |---|---|---|---|
-| `sankhya_ajuda_search_articles` | Domínio | `query: string` (1-500 chars), `limit?: int=15` (1-50), `category_id?: int\|null`, `mode?: 'hybrid'\|'semantic'\|'keyword'='hybrid'`, `include_outdated?: bool=false` | Busca híbrida (RRF k=60) sobre 6.125 artigos do help center |
+| ~~`sankhya_ajuda_search_articles`~~ | _Removida em v1.2.0_ | — | Substituída por `sankhya_ajuda_search_knowledge_unified` (linha abaixo). Source preservado em `src/tools/search.ts`; reativação em [`working-index.ts`](../mcp-server/src/tools/working-index.ts). |
 | `sankhya_ajuda_get_article_details` | Domínio | `article_id: int` (BIGINT), `max_body_chars?: int=8000` (100-40000) | Artigo completo em Markdown |
 | `sankhya_ajuda_list_categories` | Domínio | — (input vazio) | Lista as 14 categorias (ID, nome, URL, contagem) |
 | `sankhya_ajuda_list_sections` | Domínio | `category_id?: int\|null`, `parent_section_id?: int\|null` | Lista 230 seções (59 subseções aninhadas) |
@@ -169,8 +169,9 @@ A segunda fonte — comunidade Sankhya (`community.sankhya.com.br`, Bettermode/G
 ### Anotações MCP (Capabilities)
 
 Todas as tools declaram: `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`. Apenas
-`sankhya_ajuda_search_articles` declara `openWorldHint=true` (depende de estado externo do índice).
-Outras tools podem ser cacheadas agressivamente pelos clientes.
+`sankhya_ajuda_search_knowledge_unified` declara `openWorldHint=true` (depende de estado externo do
+índice de embeddings e do snapshot da comunidade). Outras tools podem ser cacheadas agressivamente
+pelos clientes.
 
 ### Transport (Fase 2)
 
@@ -328,10 +329,10 @@ vitest                     # unit tests
 │       ├── db.ts                ← PostgreSQL queries + pgvector
 │       ├── index-compat.ts      ← guardrail cross-model (v1.5.4)
 │       │
-│       ├── tools/               ← 8 MCP tools
+│       ├── tools/               ← 10 MCP tools (v1.2.0)
 │       │   ├── base.ts          ← response formatters
-│       │   ├── search.ts        ← sankhya_ajuda_search_articles
-│       │   ├── search-unified.ts ← sankhya_ajuda_search_knowledge_unified
+│       │   ├── search.ts        ← sankhya_ajuda_search_articles (DISABLED em v1.2.0; source preservado)
+│       │   ├── search-unified.ts ← sankhya_ajuda_search_knowledge_unified (busca canônica)
 │       │   ├── articles.ts      ← sankhya_ajuda_get_article_details
 │       │   ├── categories.ts    ← sankhya_ajuda_list_categories
 │       │   ├── sections.ts      ← sankhya_ajuda_list_sections

@@ -65,7 +65,7 @@ O que **tem retry**: erros transitórios do vLLM (5xx, 429, timeouts de rede) di
 
 ## Fase 2 — Caminho de Busca (implementado em v1.5+)
 
-Implementado em `mcp-server/src/tools/search.ts::sankhya_ajuda_search_articles` (TypeScript/Node).
+Implementado em `mcp-server/src/tools/search-unified.ts::sankhya_ajuda_search_knowledge_unified` (TypeScript/Node) desde v1.2.0. A política descrita abaixo aplica-se igualmente à `search.ts` (DISABLED em v1.2.0, source preservado) caso seja reativada.
 
 ### Fallback intra-provider (RF07 — política)
 

@@ -4,11 +4,11 @@
   https://www.skillsit.com.br  |  (63) 3224-4925  |  Palmas-TO-Brasil
 -->
 
-# Referência de Tools, Resources e Prompts (v1.1.0)
+# Referência de Tools, Resources e Prompts (v1.2.0)
 
 > ⚠️ **Consolidação para Single Source of Truth**
 > 
-> A partir de v1.1.0, a documentação completa de todas as **11 tools**, **6 resources** e **4 prompts** está centralizada em:
+> A partir de v1.2.0, a documentação completa de todas as **10 tools**, **6 resources** e **4 prompts** está centralizada em:
 >
 > ## 📖 [→ mcp-server/docs/TOOLS.md](../mcp-server/docs/TOOLS.md) ← Leia isto
 >
@@ -16,30 +16,29 @@
 
 ---
 
-## Resumo Executivo (v1.1.0)
+## Resumo Executivo (v1.2.0)
 
 | Aspecto | Detalhes |
 |--------|----------|
-| **11 Tools** | 8 help center (busca/artigo/categorias/seções) + 3 comunidade (busca unificada/post/spaces) |
-| **Busca Unificada** | RRF cross-source (k=60), dedup por título, label de origem oficial (evita burying) |
+| **10 Tools** | 3 help center (artigo/categorias/seções) + 3 comunidade (busca unificada/post/spaces) + 4 bridge |
+| **Busca Unificada** | Única tool de busca (`search_knowledge_unified`). RRF cross-source (k=60), dedup por título, label de origem oficial (evita burying), coluna `#` de rank autoritativo |
 | **6 Resources** | 3 estáticos (categorias/seções/sync_state) + 3 templates RFC 6570 (GET com {id}) |
-| **4 Prompts** | troubleshoot, quick_lookup, explain_module, compare_articles |
-| **Base Indexada** | 6.125 artigos (help) + 7.619 posts (comunidade) + 33 spaces públicos |
-| **Coluna Similaridade** | Cosine 0–1 (3 casas); v1.1.0 renomeia `Score` → `Similaridade` (R10) |
+| **4 Prompts** | troubleshoot, quick_lookup, explain_module, compare_articles (todos drivers do `unified`) |
+| **Base Indexada** | mais de 6.000 artigos (help) + posts da comunidade + 33 spaces públicos |
+| **Coluna Similaridade** | Cosine 0–1 (3 casas); coluna `#` adicionada em v1.2.0 (R11) como rank autoritativo (cosseno é não-monotônico) |
 | **Transport** | Streamable HTTP `:3105/mcp` + Bearer `MCP_AUTH_TOKEN` |
 
 ---
 
-## Links Rápidos (Tools v1.1.0)
+## Links Rápidos (Tools v1.2.0)
 
-**Help Center (4 tools):**
-- `sankhya_ajuda_search_articles` — Busca híbrida RRF (k=60) sobre 6.125 artigos
+**Help Center (3 tools — busca consolidada no `unified`):**
 - `sankhya_ajuda_get_article_details` — Artigo completo + breadcrumb + metadados
 - `sankhya_ajuda_list_categories` — 14 categorias top-level
 - `sankhya_ajuda_list_sections` — 230 seções + 59 subseções com hierarquia
 
-**Comunidade (3 tools — novo v1.1.0):**
-- `sankhya_ajuda_search_knowledge_unified` — Help + comunidade unificado (RRF cross-source, sem `mode` param per RFC04)
+**Comunidade + Busca Unificada (3 tools):**
+- `sankhya_ajuda_search_knowledge_unified` — **Tool padrão** para qualquer dúvida; busca help + comunidade com RRF cross-source. Aceita `source=help|community|all` (default `all`). Substitui `search_articles` desde v1.2.0.
 - `sankhya_ajuda_get_community_post` — Post + thread completo (pergunta + replies aninhadas)
 - `sankhya_ajuda_list_community_spaces` — 33 espaços públicos Bettermode
 
@@ -48,6 +47,24 @@
 - `sankhya_ajuda_read_resource_by_uri` — Lê URI concreta ou template RFC 6570
 - `sankhya_ajuda_list_prompt_catalog` — Descobre 4 prompts disponíveis
 - `sankhya_ajuda_get_prompt_by_name` — Executa prompt parametrizado
+
+---
+
+## O que Mudou em v1.2.0
+
+### Removed (BREAKING — consumer-side)
+
+- **`sankhya_ajuda_search_articles` foi desabilitada como tool MCP** (redundante com `search_knowledge_unified`). Fonte preservada em `src/tools/search.ts`; reativação é descomentar 2 linhas em `working-index.ts`.
+- **Filtros `category_id` e `mode` deliberadamente NÃO portados** para o `unified` — decisão intencional. RRF híbrido + ranking cross-source supera o filtro manual em 90%+ das queries reais, e o `mode` é decisão de runtime do backend, não do consumidor. Para filtro por categoria, ainda há `list_categories` + `list_sections`. Detalhes em [`CHANGELOG`](../CHANGELOG.md#120--2026-05-23--unified-only-search).
+
+### Changed
+
+- **`unified.description` reescrita** — removida cross-ref morta para `search_articles`; lead com "Tool padrão para qualquer dúvida sobre o Sankhya".
+- **Prompts migrados** — `sankhya_troubleshoot`, `sankhya_quick_lookup` e `sankhya_explain_module` agora chamam `search_knowledge_unified({source: 'all'})`.
+- **Tabela do `unified` ganha coluna `#`** (rank autoritativo monotônico) — resolve o caso em que `Similaridade` (cosseno cru) tem valor maior em linhas inferiores.
+
+### Não Mudou
+- Tool `get_article_details`, `list_categories`, `list_sections`, `get_community_post`, `list_community_spaces` e as 4 bridge tools permanecem inalteradas.
 
 ---
 

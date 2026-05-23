@@ -439,7 +439,7 @@ curl -s -X POST http://localhost:3105/mcp \
 
 | Tool | Categoria | Função |
 |---|---|---|
-| `sankhya_ajuda_search_articles` | Domínio | Busca híbrida (RRF) / semantic / keyword sobre os 6.125 artigos |
+| ~~`sankhya_ajuda_search_articles`~~ | _Removida em v1.2.0_ | Substituída por `sankhya_ajuda_search_knowledge_unified` (linha abaixo); source preservado |
 | `sankhya_ajuda_get_article_details` | Domínio | Artigo completo em Markdown (com cap configurável de caracteres) |
 | `sankhya_ajuda_list_categories` | Domínio | Lista as 14 categorias top-level |
 | `sankhya_ajuda_list_sections` | Domínio | Lista 230 seções (com `category_id` e `parent_section_id` opcionais) |
@@ -487,11 +487,11 @@ Sankhya, o que significa o erro E0004 na NF-e?
 
 **O que acontece:**
 
-1. A LLM chama `sankhya_ajuda_search_articles({query: "E0004 NF-e", mode: "keyword"})`
-2. Recebe top-15 artigos (default) com URLs e similaridades
-3. Identifica o artigo mais relevante (top-1) e apresenta resposta com causa, solução e link oficial
+1. A LLM chama `sankhya_ajuda_search_knowledge_unified({query: "E0004 NF-e", source: "all"})`
+2. Recebe top-15 itens (default) misturando help oficial + comunidade, com coluna `#` de rank autoritativo, similaridades e URLs
+3. Identifica o item mais relevante (`#1`) e apresenta resposta com causa, solução e link oficial
 
-> 💡 **Default `limit=15`** (max 50). Use `limit=3-5` para busca rápida quando você quer só os artigos mais relevantes (ex: prompt `sankhya_quick_lookup`), e `limit=25-50` para análise comparativa ou exploração ampla. Calibrado para corpus de 6.125 artigos com 64% concentrados em 2 categorias.
+> 💡 **Default `limit=15`** (max 50). Use `limit=3-5` para busca rápida (ex: prompt `sankhya_quick_lookup`), e `limit=25-50` para análise comparativa ou exploração ampla. Calibrado para corpus de mais de 6.000 artigos com 64% concentrados em 2 categorias.
 
 ---
 
@@ -790,7 +790,7 @@ sankhya-sync                                # Native (com venv ativo)
 
 **Causa:** Resposta excede 400 KB (cap de proteção).
 
-**Solução:** Reduzir `limit` (em `sankhya_ajuda_search_articles`) ou `max_body_chars` (em `sankhya_ajuda_get_article_details`).
+**Solução:** Reduzir `limit` (em `sankhya_ajuda_search_knowledge_unified`) ou `max_body_chars` (em `sankhya_ajuda_get_article_details` / `sankhya_ajuda_get_community_post`).
 
 📖 **Troubleshooting completo:** [`docs/OPERATIONS.md`](./docs/OPERATIONS.md#troubleshooting)
 

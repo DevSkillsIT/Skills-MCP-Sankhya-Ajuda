@@ -9,7 +9,7 @@ Auth: `Authorization: Bearer <MCP_AUTH_TOKEN>`.
 
 | # | Tool | Grupo | Função |
 |---|------|-------|--------|
-| 1 | `sankhya_ajuda_search_articles` | Busca (Help) | Busca híbrida sobre 6.125 artigos do help center |
+| 1 | ~~`sankhya_ajuda_search_articles`~~ | _Removida em v1.2.0_ | Substituída por `sankhya_ajuda_search_knowledge_unified({source: 'help'})`. Veja seção 1 abaixo. |
 | 2 | `sankhya_ajuda_get_article_details` | Busca (Help) | Corpo completo do artigo por ID |
 | 3 | `sankhya_ajuda_list_categories` | Navegação (Help) | 14 categorias top-level |
 | 4 | `sankhya_ajuda_list_sections` | Navegação (Help) | 230 seções com filtros opcionais |
@@ -27,28 +27,30 @@ Todas as tools são **somente leitura** (`readOnlyHint=true`, `destructiveHint=f
 
 ## Tools do Help Center
 
-### 1. `sankhya_ajuda_search_articles`
+### 1. ~~`sankhya_ajuda_search_articles`~~ — Removida em v1.2.0
 
-Busca híbrida (RRF k=60) combinando similaridade semântica (pgvector `halfvec 2560d`) e
-full-text search PT-BR (`portuguese_unaccent`) sobre 6.125 artigos oficiais do help center Sankhya.
+> ⚠️ **Esta tool foi desativada em v1.2.0** (commit `e1f9167`). A entrada permanece aqui
+> apenas para referência histórica e para manter a numeração sequencial das demais.
 
-**Anotações:** `readOnlyHint=true`, `destructiveHint=false`, `idempotentHint=true`, `openWorldHint=true`
+**Substituta canônica:** `sankhya_ajuda_search_knowledge_unified` (seção 5 abaixo) — busca o mesmo
+corpus do help center com `source: 'help'` e mistura com a comunidade quando `source: 'all'`
+(default).
 
-**Parâmetros:**
+**O que mudou:**
+- Parâmetros `category_id` e `mode` deliberadamente **NÃO** portados para o `unified` — decisão
+  intencional, não esquecimento. Para a maioria das queries, o RRF híbrido cross-source supera o
+  filtro manual; o `mode` virou decisão de runtime do backend (degradação automática). Detalhes
+  em [`CHANGELOG`](../../CHANGELOG.md#120--2026-05-23--unified-only-search).
+- Filtragem por categoria: combine `sankhya_ajuda_list_categories` + `list_sections` antes para
+  identificar IDs, depois refine a `query` do `unified` com termos da categoria.
 
-| Parâmetro | Tipo | Obrigatório | Default | Descrição |
-|-----------|------|-------------|---------|-----------|
-| `query` | string (1-500 chars) | Sim | — | Consulta em texto livre |
-| `limit` | integer (1-50) | Não | 15 | Máximo de resultados |
-| `category_id` | integer | Não | null | Filtra por uma categoria específica |
-| `include_outdated` | boolean | Não | false | Inclui artigos marcados como obsoletos |
-| `mode` | enum: `hybrid`/`semantic`/`keyword` | Não | `hybrid` | Estratégia de busca |
+**Reativação:** o source (`src/tools/search.ts`) e a função `registerSearchTool` permanecem no
+repositório. Para reativar, descomente as 2 linhas em `src/tools/working-index.ts`:
 
-**Retorna:** tabela Markdown com colunas: `Título | Breadcrumb | Similaridade | URL`.
-
-**Degradação:** quando `EMBEDDING_PROVIDER=none` ou há mismatch de índice, `hybrid` e `semantic`
-degradam para busca keyword-only; `semantic` retorna `EMBEDDING_UNAVAILABLE` se os embeddings
-estiverem indisponíveis e o fallback não for possível.
+```ts
+// import { registerSearchTool } from './search.js';   // descomentar
+// registerSearchTool(server, ctx);                    // descomentar
+```
 
 ---
 
@@ -151,8 +153,8 @@ O RRF com k=60 garante que os artigos oficiais apareçam consistentemente no top
 - `Contexto`: breadcrumb (help) ou nome do espaço (comunidade); `—` se ausente
 - `Similaridade`: similaridade de cosseno 0.000–1.000 (3 casas decimais) ou `—` em modo keyword. **Não-monotônica** com a ordem das linhas (é o cosseno cru por item, não o score de ranking).
 
-**Degradação:** igual à `sankhya_ajuda_search_articles` — quando `EMBEDDING_PROVIDER=none` ou
-há mismatch de índice, os dois corpora caem para busca keyword-only. O `distThreshold`
+**Degradação:** quando `EMBEDDING_PROVIDER=none` ou há mismatch de índice, ambos os corpora
+caem para busca keyword-only (FTS PT-BR com `unaccent`). O `distThreshold`
 (env `COMMUNITY_DIST_THRESHOLD`, default 0.45) filtra posts da comunidade com baixa
 relevância, apenas no CTE semântico.
 
@@ -315,7 +317,7 @@ mensagens Markdown estruturadas para workflows guiados de análise.
 | `NOT_FOUND` | Entidade não existe | `sankhya_ajuda_get_article_details`, `sankhya_ajuda_get_community_post` |
 | `RESPONSE_TOO_LARGE` | Resposta excede 400 KB | Todas as tools |
 | `INTERNAL_ERROR` | Exceção inesperada | Todas as tools |
-| `EMBEDDING_UNAVAILABLE` | Busca semântica indisponível, sem fallback | `sankhya_ajuda_search_articles` (só modo semantic) |
+| `EMBEDDING_UNAVAILABLE` | Busca semântica indisponível, sem fallback de keyword | `sankhya_ajuda_search_knowledge_unified` (somente em mismatch sem fallback possível) |
 | `INVALID_PROMPT_NAME` | Nome de prompt desconhecido | `sankhya_ajuda_get_prompt_by_name` |
 
 > A `sankhya_ajuda_search_knowledge_unified` **nunca** retorna `EMBEDDING_UNAVAILABLE` —
