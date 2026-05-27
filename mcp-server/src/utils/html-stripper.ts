@@ -115,11 +115,41 @@ export function truncate(text: string, maxLen: number = 300): string {
 }
 
 /**
- * Escape characters that would break Markdown tables (pipe, newline, backtick).
+ * Escape characters that would break Markdown rendering when interpolated into
+ * a table cell or a heading by downstream consumers (LLMs that re-emit the
+ * output, MDX/CommonMark-tolerant renderers, chat clients).
+ *
+ * Coverage (in order):
+ *   - `|`  → `\|`   (table cell separator)
+ *   - `\n` →  ' '   (flatten — newlines break table rows)
+ *   - `` ` `` → ``\` ``  (inline code, breaks if unbalanced)
+ *   - `[` `]` → `\[` `\]`  (reference-link pattern; SEFAZ titles routinely
+ *                            contain `[nItem: 999]`, `[nRec:'XXX']`, etc.,
+ *                            which some tolerant parsers treat as pending
+ *                            link references that never resolve, mangling
+ *                            the cell)
+ *   - `_` → `\_`   (italic / bold-italic when paired — defensive)
+ *   - `*` → `\*`   (italic / bold when paired — defensive)
+ *
+ * Decision history: added `[`, `]`, `_`, `*` in v1.2.x after black-box testing
+ * surfaced 4+ SEFAZ titles with `[nItem: ...]` in the unified search table.
+ * CommonMark-strict renderers (Claude chat, GitHub, Slack, MDX strict) collapse
+ * the escapes invisibly; tolerant renderers may show a literal `\`, which is a
+ * minor visual cost in exchange for not breaking table/heading semantics.
+ *
+ * Intentionally NOT escaped:
+ *   - Body content (`## Conteudo` of articles and posts) — kept raw to
+ *     preserve the editor's intentional bold/italic formatting from Zendesk.
+ *     Only labels/IDs/titles/contexts/URLs that go through cells/headings
+ *     pass through this function.
  */
 export function escapeMarkdown(text: string): string {
   return text
     .replace(/\|/g, '\\|')
     .replace(/\n/g, ' ')
-    .replace(/`/g, '\\`');
+    .replace(/`/g, '\\`')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/_/g, '\\_')
+    .replace(/\*/g, '\\*');
 }

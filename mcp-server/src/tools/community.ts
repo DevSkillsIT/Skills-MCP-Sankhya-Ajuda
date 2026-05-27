@@ -86,7 +86,9 @@ function formatCommunityPostDetail(post: CommunityPostFull, maxBodyChars: number
     ['URL', post.url],
   ];
 
-  const header = formatDetail(escapeMarkdown(post.title), fields);
+  // formatDetail escapes the title internally (since v1.2.x). Passing the raw
+  // post.title — escaping twice would produce literal backslashes in the H1.
+  const header = formatDetail(post.title, fields);
 
   let content: string;
   if (post.body_text.trim().length === 0) {

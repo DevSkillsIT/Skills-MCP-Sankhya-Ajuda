@@ -27,14 +27,22 @@ export function formatTable(
   return lines.join('\n');
 }
 
-/** Format a single record as a Markdown detail view (title + field/value table). */
+/**
+ * Format a single record as a Markdown detail view (title + field/value table).
+ *
+ * The `title` is escaped INSIDE this function (since v1.2.x) so callers cannot
+ * forget; passing an already-escaped string would double-escape. Field values
+ * and labels are escaped per-cell as before.
+ */
 export function formatDetail(
   title: string,
   fields: Array<[string, unknown]>,
 ): string {
   const lines: string[] = [];
 
-  lines.push(`# ${title}`);
+  // H1 title — escape so callers don't have to remember (community.ts and
+  // entity.ts had divergent behaviour before this was centralised).
+  lines.push(`# ${escapeMarkdown(title)}`);
   lines.push('');
   lines.push('| Campo | Valor |');
   lines.push('|---|---|');

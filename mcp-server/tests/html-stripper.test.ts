@@ -98,4 +98,33 @@ describe('escapeMarkdown', () => {
   it('escapes backticks', () => {
     expect(escapeMarkdown('`code`')).toBe('\\`code\\`');
   });
+
+  it('escapes square brackets (prevents reference-link mangling)', () => {
+    expect(escapeMarkdown('[nItem: 999]')).toBe('\\[nItem: 999\\]');
+    expect(escapeMarkdown("[nRec:'XXXXXXXXXXX']")).toBe("\\[nRec:'XXXXXXXXXXX'\\]");
+    expect(escapeMarkdown('[IdentificacaoRps]')).toBe('\\[IdentificacaoRps\\]');
+  });
+
+  it('escapes underscores (prevents accidental italic)', () => {
+    expect(escapeMarkdown('c_motivo_extra')).toBe('c\\_motivo\\_extra');
+    expect(escapeMarkdown('_versao_2026')).toBe('\\_versao\\_2026');
+  });
+
+  it('escapes asterisks (prevents accidental italic/bold)', () => {
+    expect(escapeMarkdown('*texto*')).toBe('\\*texto\\*');
+    expect(escapeMarkdown('**bold**')).toBe('\\*\\*bold\\*\\*');
+  });
+
+  it('handles real SEFAZ title from corpus (regression)', () => {
+    const real = '1039 Rejeição: nItem do DFeReferenciado informado indevidamente [nItem: 999]';
+    const escaped = escapeMarkdown(real);
+    expect(escaped).toContain('\\[nItem: 999\\]');
+    expect(escaped).not.toMatch(/(?<!\\)\[/); // no unescaped [
+    expect(escaped).not.toMatch(/(?<!\\)\]/); // no unescaped ]
+  });
+
+  // NOTE: escapeMarkdown is intentionally NOT idempotent. Calling it twice
+  // would double-escape (e.g. `\|` → `\\|`). Callers must invoke exactly once
+  // per cell value. This is documented in the function's docstring, not asserted
+  // here, because asserting a non-property would just add maintenance noise.
 });
