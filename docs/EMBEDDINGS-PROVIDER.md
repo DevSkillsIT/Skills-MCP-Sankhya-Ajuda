@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT).
+
 <!--
   Sankhya Ajuda MCP — Guia de Decisão de Provider de Embeddings
   Skills IT — Soluções em Tecnologia

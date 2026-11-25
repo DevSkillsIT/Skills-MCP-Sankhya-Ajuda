@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT).
+
 # Sankhya Ajuda — Fase 1 (ETL + DB) — Relatório de Aceite
 
 > 📌 **Nota histórica:** Este relatório reflete o estado da **Fase 1 (ETL)** conforme validado em **2026-05-15**. A versão atual do projeto é **v1.1.0** (2026-05-22), que adiciona **Fase 2 (MCP Server)** com busca unificada source-aware e 3 tools de comunidade. Para o estado atual, consulte o [`SPEC-SANKHYA-COMMUNITY-001`](../../.moai/specs/SPEC-SANKHYA-COMMUNITY-001/spec.md).

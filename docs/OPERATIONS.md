@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT).
+
 # Runbook de Operação
 
 Práticas operacionais para o sync diário do `sankhya_ajuda`. Pressupõe acesso ao servidor com o container `postgres` rodando e ao caminho `/path/to/sankhya-ajuda-mcp/`.

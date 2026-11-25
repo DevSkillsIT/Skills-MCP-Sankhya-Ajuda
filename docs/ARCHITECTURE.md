@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT).
+
 # sankhya_ajuda — MCP de Ajuda do Sankhya
 
 **Escopo**: Base de conhecimento pública do Sankhya (ajuda.sankhya.com.br).

@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT).
+
 <!--
   Sankhya Ajuda MCP - Referência Canônica de Tools
   Skills IT - Soluções em Tecnologia
