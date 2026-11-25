@@ -72,7 +72,7 @@ export interface CreateServerOptions {
 export function createServer(opts: CreateServerOptions): McpServer {
   const server = new McpServer(
     {
-      name: '@skillsit/sankhya-ajuda-mcp',
+      name: '@victorferreira/sankhya-ajuda-mcp',
       version: SERVER_VERSION,
     },
     {

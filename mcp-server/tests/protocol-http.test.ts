@@ -67,7 +67,7 @@ async function initialize(app: ReturnType<typeof buildHttpApp>['app']): Promise<
   const body = parseJsonRpc(res) as {
     result: { serverInfo: { name: string }; instructions: string };
   };
-  expect(body.result.serverInfo.name).toBe('@skillsit/sankhya-ajuda-mcp');
+  expect(body.result.serverInfo.name).toBe('@victorferreira/sankhya-ajuda-mcp');
   expect(body.result.instructions).toContain('sankhya_ajuda_search_knowledge_unified');
 
   const sessionId = res.headers['mcp-session-id'];

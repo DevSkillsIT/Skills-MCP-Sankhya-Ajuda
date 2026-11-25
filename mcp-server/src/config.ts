@@ -153,7 +153,7 @@ export function buildTestSettings(overrides: Partial<Settings> = {}): Settings {
     },
     embeddingProvider: 'vllm',
     logLevel: 'error',
-    tenantLabel: 'skillsit-test',
+    tenantLabel: 'victorferreira-test',
   };
   return { ...base, ...overrides };
 }
