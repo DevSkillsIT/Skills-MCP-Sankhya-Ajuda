@@ -18,14 +18,14 @@
       "url": "https://www.skillsit.com.br"
     }
   ],
-  "homepage": "https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda#readme",
+  "homepage": "https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git",
+    "url": "https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda.git",
     "directory": "mcp-server"
   },
   "bugs": {
-    "url": "https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda/issues"
+    "url": "https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda/issues"
   },
   "scripts": {
     "build": "tsc",
@@ -75,5 +75,11 @@
   ],
   "engines": {
     "node": ">=22.0.0"
-  }
+  },
+  "maintainers": [
+    {
+      "name": "Victor Ferreira (victorferreira)",
+      "url": "https://github.com/victorfeer"
+    }
+  ]
 }

@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT). [Repositório da variante](https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda/tree/dev-victorferreira).
+
 <!--
   Sankhya Ajuda MCP — Skills IT — Soluções em Tecnologia
   https://www.skillsit.com.br  ·  (63) 3224-4925  ·  Palmas - TO - Brasil
@@ -24,7 +26,7 @@ Este documento explica como instalar e rodar o **Sankhya Ajuda MCP**. Escolha o 
 
 1. Clone o repositório
    ```bash
-   git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+   git clone -b dev-victorferreira https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda.git
    cd Skills-MCP-Sankhya-Ajuda
    ```
 
@@ -136,7 +138,7 @@ docker compose down
 
 1. Clone o repositório
    ```bash
-   git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+   git clone -b dev-victorferreira https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda.git
    cd Skills-MCP-Sankhya-Ajuda
    ```
 
