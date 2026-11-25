@@ -35,10 +35,10 @@ FROM node:22-alpine AS final
 
 LABEL org.opencontainers.image.title="sankhya-ajuda-mcp" \
       org.opencontainers.image.description="MCP server for Sankhya Help Center — hybrid RRF search over 6,123 articles" \
-      org.opencontainers.image.vendor="Skills IT — Soluções em Tecnologia" \
+      org.opencontainers.image.vendor="Victor Ferreira (victorferreira)" \
       org.opencontainers.image.authors="Skills IT <contato@skillsit.com.br>" \
-      org.opencontainers.image.url="https://www.skillsit.com.br" \
-      org.opencontainers.image.source="https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda" \
+      org.opencontainers.image.url="https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda" \
+      org.opencontainers.image.source="https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="0.2.0"
 

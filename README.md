@@ -5,6 +5,13 @@
 
 # Sankhya Ajuda MCP
 
+## Integração Codex e Oracle (variante Victor Ferreira)
+
+Consulte [CODEX-ORACLE.md](docs/CODEX-ORACLE.md) para configurar o cliente Codex e o MCP Oracle de metadados somente leitura. A conexão real depende de credenciais, rede e permissões do ambiente de testes.
+
+
+> Variante mantida por **Victor Ferreira (`victorferreira`)** — repositório [victorfeer/Skills-MCP-Sankhya-Ajuda](https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda). Projeto original: Skills IT (MIT).
+
 > **Status:** ✅ Em produção · **Versão:** 1.5.6 · **Endpoint padrão:** `http://<host>:3105/mcp` · **Tools:** 11 · **Resources:** 6 · **Prompts:** 4 · **Desenvolvido por:** [Skills IT](https://www.skillsit.com.br)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
@@ -203,7 +210,7 @@ O projeto é composto por **duas fases desacopladas**, conversando apenas via sc
 ### Teste Rápido (Cenário #1)
 
 ```bash
-git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+git clone -b dev-victorferreira https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda.git
 cd Skills-MCP-Sankhya-Ajuda
 
 cp .env.example .env
@@ -221,7 +228,7 @@ Completo em ~10 min. Veja [`docs/INSTALL.md`](./docs/INSTALL.md) para detalhes.
 ### Production (Cenário #2 — com PostgreSQL existente)
 
 ```bash
-git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+git clone -b dev-victorferreira https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda.git
 cd Skills-MCP-Sankhya-Ajuda
 
 # FASE 1 — Python ETL

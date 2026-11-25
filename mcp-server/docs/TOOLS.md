@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT).
+
 # Sankhya Ajuda MCP — Referência de Tools
 
 Todas as 11 tools expostas pelo servidor MCP. Transporte: Streamable HTTP em `:3105/mcp`.

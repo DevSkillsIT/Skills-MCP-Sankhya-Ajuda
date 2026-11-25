@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT).
+
 # Referência de Schema
 
 Referência completa do schema `sankhya_ajuda` em PostgreSQL. Fonte de verdade: `sql/schema.sql`.

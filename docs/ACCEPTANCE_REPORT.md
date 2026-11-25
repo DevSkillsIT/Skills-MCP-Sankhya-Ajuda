@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT).
+
 # Sankhya Ajuda — Fase 1 (ETL + DB) — Relatório de Aceite
 
 > 📌 **Nota histórica:** Este relatório reflete o estado da **Fase 1 (ETL)** conforme validado em **2026-05-15**. A versão atual do projeto é **v1.1.0** (2026-05-22), que adiciona **Fase 2 (MCP Server)** com busca unificada source-aware e 3 tools de comunidade. Para o estado atual, consulte o [`SPEC-SANKHYA-COMMUNITY-001`](../../.moai/specs/SPEC-SANKHYA-COMMUNITY-001/spec.md).
@@ -91,7 +93,7 @@ Primeira query inclui custo do embedding (~100 ms via vLLM). Demais são consult
 
 ## 6. Campos capturados (resposta direta ao escopo solicitado)
 
-| Pergunta do Adriano | Campo no schema | Origem Zendesk |
+| Pergunta de validação original | Campo no schema | Origem Zendesk |
 |---|---|---|
 | Data de criação | `articles.created_at_zendesk` | `created_at` |
 | "Atualizado há X meses" | `articles.updated_at_zendesk` + `edited_at_zendesk` | `updated_at`, `edited_at` |

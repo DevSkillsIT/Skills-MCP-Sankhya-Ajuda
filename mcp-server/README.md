@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT). [Repositório da variante](https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda/tree/dev-victorferreira).
+
 <!--
   Sankhya Ajuda MCP Server - Fase 3 (TypeScript)
   Skills IT - Solucoes em Tecnologia

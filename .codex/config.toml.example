@@ -1,0 +1,8 @@
+[mcp_servers.sankhya_ajuda]
+url = "http://127.0.0.1:3105/mcp"
+bearer_token_env_var = "SANKHYA_MCP_TOKEN"
+
+[mcp_servers.sankhya_oracle]
+command = "C:/CAMINHO/Skills-MCP-Sankhya-Ajuda/mcp-oracle/.venv/Scripts/python.exe"
+args = ["C:/CAMINHO/Skills-MCP-Sankhya-Ajuda/mcp-oracle/server.py"]
+env_vars = ["ORACLE_ENV", "ORACLE_DSN", "ORACLE_USER", "ORACLE_PASSWORD", "ORACLE_SCHEMA", "ORACLE_ALLOW_SOURCE"]

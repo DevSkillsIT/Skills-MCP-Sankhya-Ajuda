@@ -54,7 +54,7 @@ describe('GET /health (AC01 / QG01) — public, no auth', () => {
     expect(res.body).toMatchObject({
       status: 'ok',
       version: SERVER_VERSION,
-      tenant: 'skillsit-test',
+      tenant: 'victorferreira-test',
       last_sync_status: 'ok',
       error_count: 0,
       articles_count: 6123,

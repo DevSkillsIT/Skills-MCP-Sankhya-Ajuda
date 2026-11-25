@@ -123,7 +123,7 @@ services:
       OPENAI_API_KEY:                 ${OPENAI_API_KEY:-}
       OPENAI_MODEL:                   ${OPENAI_MODEL:-text-embedding-3-large}
       LOG_LEVEL:                      ${LOG_LEVEL:-info}
-      TENANT_LABEL:                   ${TENANT_LABEL:-skillsit}
+      TENANT_LABEL:                   ${TENANT_LABEL:-victorferreira}
     ports:
       - "${MCP_PORT:-3105}:3105"
     healthcheck:

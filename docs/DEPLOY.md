@@ -1,3 +1,5 @@
+> Variante mantida por Victor Ferreira (`victorferreira`). Projeto original: Skills IT (MIT). [Repositório da variante](https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda/tree/dev-victorferreira).
+
 <!--
   Sankhya Ajuda MCP — Deploy Guide
   Skills IT — Soluções em Tecnologia
@@ -39,7 +41,7 @@ Este projeto suporta **dois caminhos de deploy oficialmente** — escolha o que 
 ### Passo 1 — Clonar e preparar `.env`
 
 ```bash
-git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+git clone -b dev-victorferreira https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda.git
 cd Skills-MCP-Sankhya-Ajuda
 
 cp .env.example .env
@@ -160,7 +162,7 @@ Para quando você **já tem PostgreSQL** rodando no host (ou em rede acessível)
 ### Passo 1 — Clonar e configurar
 
 ```bash
-git clone https://github.com/DevSkillsIT/Skills-MCP-Sankhya-Ajuda.git
+git clone -b dev-victorferreira https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda.git
 cd Skills-MCP-Sankhya-Ajuda
 cp .env.example .env
 $EDITOR .env
