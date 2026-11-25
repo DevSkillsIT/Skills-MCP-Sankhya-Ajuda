@@ -1,5 +1,5 @@
 {
-  "name": "@skillsit/sankhya-ajuda-mcp",
+  "name": "@victorferreira/sankhya-ajuda-mcp",
   "version": "1.2.0",
   "description": "MCP Server for Sankhya ERP help center + community (Bettermode) — unified hybrid search (RRF cross-source) over 6,123 articles + 7,618 community posts. Streamable HTTP + Bearer auth. Read-only. Built by Skills IT.",
   "type": "module",
@@ -12,12 +12,6 @@
     "url": "https://www.skillsit.com.br",
     "email": "contato@skillsit.com.br"
   },
-  "contributors": [
-    {
-      "name": "Adriano Fante",
-      "url": "https://www.skillsit.com.br"
-    }
-  ],
   "homepage": "https://github.com/victorfeer/Skills-MCP-Sankhya-Ajuda#readme",
   "repository": {
     "type": "git",
@@ -81,5 +75,6 @@
       "name": "Victor Ferreira (victorferreira)",
       "url": "https://github.com/victorfeer"
     }
-  ]
+  ],
+  "private": true
 }

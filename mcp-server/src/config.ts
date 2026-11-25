@@ -65,7 +65,7 @@ const configSchema = z.object({
   openai: openaiSchema,
   embeddingProvider: z.enum(['vllm', 'openai', 'none']).default('vllm'),
   logLevel: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
-  tenantLabel: z.string().default('skillsit'),
+  tenantLabel: z.string().default('victorferreira'),
 });
 
 export type Settings = z.infer<typeof configSchema>;

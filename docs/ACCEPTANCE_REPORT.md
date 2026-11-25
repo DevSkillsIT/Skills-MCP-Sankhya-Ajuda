@@ -93,7 +93,7 @@ Primeira query inclui custo do embedding (~100 ms via vLLM). Demais são consult
 
 ## 6. Campos capturados (resposta direta ao escopo solicitado)
 
-| Pergunta do Adriano | Campo no schema | Origem Zendesk |
+| Pergunta de validação original | Campo no schema | Origem Zendesk |
 |---|---|---|
 | Data de criação | `articles.created_at_zendesk` | `created_at` |
 | "Atualizado há X meses" | `articles.updated_at_zendesk` + `edited_at_zendesk` | `updated_at`, `edited_at` |
